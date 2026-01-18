@@ -1,5 +1,13 @@
-name: Onboard to MemBrowse
-on: workflow_dispatch  # Manual trigger only
+name: Onboard to Membrowse
+
+on:
+  workflow_dispatch:
+    inputs:
+      num_commits:
+        description: 'Number of commits to process'
+        required: true
+        default: '50'
+        type: string
 
 jobs:
   onboard:
@@ -7,9 +15,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Required for historical analysis
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -21,15 +29,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install platformio
 
-      - name: Build firmware (ESP32)
-        run: pio run -e esp32dev
-
-      - name: MemBrowse Onboarding
+      - name: Run Membrowse Onboard Action
         uses: membrowse/membrowse-action/onboard-action@v1
         with:
-          num_commits: 50
+          target_name: esp32dev
+          num_commits: ${{ github.event.inputs.num_commits }}
           build_script: "pio run -e esp32dev"
           elf: .pio/build/esp32dev/firmware.elf
-          target_name: esp32dev
+          ld: /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/ld/memory.ld
           api_key: ${{ secrets.MEMBROWSE_API_KEY }}
-          identical: true

@@ -1,5 +1,7 @@
 # MiniOS-ESP Documentation
 
+[![membrowse](https://membrowse.com/badge.svg)](https://membrowse.com/public/VuqarAhadli/MiniOS-ESP)
+
 ## Table of Contents
 1. [Overview](#overview)
 2. [Architecture](#architecture)
