@@ -1,5 +1,5 @@
-#ifndef GRAPHER.H
-#define GRAPHER.H
+#ifndef GRAPHER_H
+#define GRAPHER_H
 
 #include <Arduino.h>
 
