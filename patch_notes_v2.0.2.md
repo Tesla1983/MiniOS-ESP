@@ -1,4 +1,4 @@
-# MiniOS v2.0.1 - Patch Notes
+# MiniOS v2.0.2 - Patch Notes
 
 ## 🎯 Core Improvements
 
@@ -71,4 +71,4 @@ All help menus updated to reflect new aliases and improved descriptions.
 
 ---
 **Repository:** github.com/VuqarAhadli  
-**Version:** 2.0.1
+**Version:** 2.0.2

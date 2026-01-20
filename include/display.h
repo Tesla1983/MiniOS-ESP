@@ -3,9 +3,11 @@
 
 #include <Arduino.h>
 #include <Adafruit_ST7789.h>
+#include <string>
 
 extern Adafruit_ST7789 tft;
 extern bool screenLocked;
+extern bool screenCleared;
 extern int16_t currentCursorY;
 
 #define MAX_Y 230
@@ -13,7 +15,8 @@ extern int16_t currentCursorY;
 void initDisplay();
 void applyTheme();
 void clearScreen();
-void printLine(String s);
+void printLine(const std::string& s);
+void print(const std::string& s);
 void showLogo();
 void screensaver(int mode);
 #endif

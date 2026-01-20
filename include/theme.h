@@ -2,6 +2,7 @@
 #define THEME_H
 
 #include <Arduino.h>
+#include <string>
 
 struct Theme {
     uint16_t bg;
@@ -15,7 +16,7 @@ extern int themeCount;
 
 void initThemes();
 void listThemes();
-void setTheme(String themeName);
+void setTheme(const std::string& themeName);
 Theme getCurrentTheme();
 
 #endif

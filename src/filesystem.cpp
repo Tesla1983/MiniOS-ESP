@@ -2,6 +2,7 @@
 #include "display.h"
 #include <FS.h>
 #include <SPIFFS.h>
+#include <string>
 
 bool initFilesystem() {
     if (!SPIFFS.begin(true)) {
@@ -12,64 +13,67 @@ bool initFilesystem() {
     
     size_t total = SPIFFS.totalBytes();
     size_t used = SPIFFS.usedBytes();
-    printLine("SPIFFS: " + String(used) + "/" + String(total) + " bytes");
+    printLine("SPIFFS: " + std::to_string(used) + "/" + std::to_string(total) + " bytes");
     
     return true;
 }
 
-void writeFile(String name, String data) {
+void writeFile(const std::string& name_in, const std::string& data) {
+    std::string name = name_in;
    
-    if (!name.startsWith("/")) {
+    if (name.substr(0, 1) != "/") {
         name = "/" + name;
     }
     
-    File f = SPIFFS.open(name, FILE_WRITE);
+    File f = SPIFFS.open(name.c_str(), FILE_WRITE);
     if (!f) {
         printLine("Error opening file.");
         return;
     }
     
-    size_t written = f.print(data);
+    size_t written = f.print(data.c_str());
     f.flush();  
     f.close();
     
     if (written > 0) {
-        printLine("Written " + String(written) + " bytes.");
+        printLine("Written " + std::to_string(written) + " bytes.");
     } else {
         printLine("Error: 0 bytes written.");
     }
 }
 
-void appendFile(String name, String data) {
+void appendFile(const std::string& name_in, const std::string& data) {
+    std::string name = name_in;
     
-    if (!name.startsWith("/")) {
+    if (name.substr(0, 1) != "/") {
         name = "/" + name;
     }
     
-    File f = SPIFFS.open(name, FILE_APPEND);
+    File f = SPIFFS.open(name.c_str(), FILE_APPEND);
     if (!f) {
         printLine("Error opening file.");
         return;
     }
     
-    size_t written = f.print(data);
+    size_t written = f.print(data.c_str());
     f.flush(); 
     f.close();
     
     if (written > 0) {
-        printLine("Appended " + String(written) + " bytes.");
+        printLine("Appended " + std::to_string(written) + " bytes.");
     } else {
         printLine("Error: 0 bytes appended.");
     }
 }
 
-void readFile(String name) {
+void readFile(const std::string& name_in) {
+    std::string name = name_in;
     
-    if (!name.startsWith("/")) {
+    if (name.substr(0, 1) != "/") {
         name = "/" + name;
     }
     
-    File f = SPIFFS.open(name);
+    File f = SPIFFS.open(name.c_str());
     if (!f) {
         printLine("Error reading file.");
         return;
@@ -78,7 +82,8 @@ void readFile(String name) {
     if (f.available()) {
         printLine("File: " + name);
         while (f.available()) {
-            printLine(f.readStringUntil('\n'));
+            String line = f.readStringUntil('\n');
+            printLine(std::string(line.c_str()));
         }
     } else {
         printLine("File is empty.");
@@ -87,13 +92,14 @@ void readFile(String name) {
     f.close();
 }
 
-void deleteFile(String name) {
+void deleteFile(const std::string& name_in) {
+    std::string name = name_in;
     
-    if (!name.startsWith("/")) {
+    if (name.substr(0, 1) != "/") {
         name = "/" + name;
     }
     
-    if (SPIFFS.remove(name)) {
+    if (SPIFFS.remove(name.c_str())) {
         printLine("File deleted.");
     } else {
         printLine("Error deleting file.");
@@ -103,7 +109,7 @@ void deleteFile(String name) {
 void listFiles() {
     size_t totalBytes = SPIFFS.totalBytes();
     size_t usedBytes = SPIFFS.usedBytes();
-    printLine("SPIFFS: " + String(usedBytes) + "/" + String(totalBytes) + " bytes");
+    printLine("SPIFFS: " + std::to_string(usedBytes) + "/" + std::to_string(totalBytes) + " bytes");
     printLine("Files:");
     
     File root = SPIFFS.open("/");
@@ -121,15 +127,15 @@ void listFiles() {
         }
         
         found = true;
-        String fileName = String(file.name());
+        std::string fileName(file.name());
         
         
-        if (fileName.startsWith("/")) {
-            fileName = fileName.substring(1);
+        if (!fileName.empty() && fileName[0] == '/') {
+            fileName = fileName.substr(1);
         }
         
         if (fileName.length() > 0) {
-            printLine("  " + fileName + " - " + String(file.size()) + " bytes");
+            printLine("  " + fileName + " - " + std::to_string(file.size()) + " bytes");
         }
         
         file.close();
@@ -142,16 +148,18 @@ void listFiles() {
     root.close();
 }
 
-bool renameFile(String oldName, String newName) {
+bool renameFile(const std::string& oldName_in, const std::string& newName_in) {
+    std::string oldName = oldName_in;
+    std::string newName = newName_in;
    
-    if (!oldName.startsWith("/")) {
+    if (oldName.substr(0, 1) != "/") {
         oldName = "/" + oldName;
     }
-    if (!newName.startsWith("/")) {
+    if (newName.substr(0, 1) != "/") {
         newName = "/" + newName;
     }
     
-    if (SPIFFS.rename(oldName, newName)) {
+    if (SPIFFS.rename(oldName.c_str(), newName.c_str())) {
         printLine("Renamed.");
         return true;
     }
@@ -160,22 +168,24 @@ bool renameFile(String oldName, String newName) {
     return false;
 }
 
-bool copyFile(String src, String dst) {
+bool copyFile(const std::string& src_in, const std::string& dst_in) {
+    std::string src = src_in;
+    std::string dst = dst_in;
     
-    if (!src.startsWith("/")) {
+    if (src.substr(0, 1) != "/") {
         src = "/" + src;
     }
-    if (!dst.startsWith("/")) {
+    if (dst.substr(0, 1) != "/") {
         dst = "/" + dst;
     }
     
-    File in = SPIFFS.open(src);
+    File in = SPIFFS.open(src.c_str());
     if (!in) {
         printLine("Error reading src file.");
         return false;
     }
     
-    File out = SPIFFS.open(dst, FILE_WRITE);
+    File out = SPIFFS.open(dst.c_str(), FILE_WRITE);
     if (!out) {
         in.close();
         printLine("Error opening dst file.");

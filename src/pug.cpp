@@ -282,5 +282,5 @@ void displayPug() {
 
     screenLocked = false;      
     clearScreen();
-    tft.print("> ");
+    
 }

@@ -2,8 +2,9 @@
 #define GRAPHER_H
 
 #include <Arduino.h>
+#include <string>
 
-bool evaluateWithX(String expression, float xValue, float& result);
-void funcToGraph(String expression, String lineColour);
+bool evaluateWithX(const std::string& expression, float xValue, float& result);
+void funcToGraph(const std::string& expression, const std::string& lineColour);
 
 #endif

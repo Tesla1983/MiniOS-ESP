@@ -11,12 +11,16 @@
 #include <esp_system.h>
 #include <WiFi.h>
 #include <math.h>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
 #define PI 3.14159265358979323846
 #define E  2.71828182845904523536
 #define HISTORY_SIZE 10  
 const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-String commandHistory[HISTORY_SIZE];
+std::string commandHistory[HISTORY_SIZE];
 int historyIndex = 0;
 int historyCount = 0;
 
@@ -25,12 +29,12 @@ int historyCount = 0;
 
 
 void showVersion() {
-    printLine("MiniOS " + String(OS_VERSION));
+    printLine("MiniOS " + std::string(OS_VERSION));
     printLine("Repository: github.com/VuqarAhadli");
 }
 
 
-void addToHistory(String cmd) {
+void addToHistory(const std::string& cmd) {
     if (cmd.length() == 0) return;
     if (historyCount > 0 && commandHistory[(historyIndex - 1 + HISTORY_SIZE) % HISTORY_SIZE] == cmd) return;
     commandHistory[historyIndex] = cmd;
@@ -47,41 +51,41 @@ void showHistory() {
     int start = (historyIndex - historyCount + HISTORY_SIZE) % HISTORY_SIZE;
     for (int i = 0; i < historyCount; i++) {
         int idx = (start + i) % HISTORY_SIZE;
-        printLine(String(i + 1) + ": " + commandHistory[idx]);
+        printLine(std::to_string(i + 1) + ": " + commandHistory[idx]);
     }
 }
 
 
 
-void hexCommand(String numStr) {
-    long num = numStr.toInt();
+void hexCommand(const std::string& numStr) {
+    long num = std::stol(numStr);
     char hexStr[20];
     sprintf(hexStr, "0x%lX", num);
-    printLine("Decimal: " + String(num));
-    printLine("Hexadecimal: " + String(hexStr));
+    printLine("Decimal: " + std::to_string(num));
+    printLine("Hexadecimal: " + std::string(hexStr));
 }
 
-void binCommand(String numStr) {
-    long num = numStr.toInt();
-    String binStr = "";
+void binCommand(const std::string& numStr) {
+    long num = std::stol(numStr);
+    std::string binStr = "";
     
     if (num == 0) {
         binStr = "0";
     } else {
         long temp = num;
         while (temp > 0) {
-            binStr = String(temp % 2) + binStr;
+            binStr = std::to_string(temp % 2) + binStr;
             temp /= 2;
         }
     }
     
-    printLine("Decimal: " + String(num));
+    printLine("Decimal: " + std::to_string(num));
     printLine("Binary: 0b" + binStr);
 }
 
 
-String base64Encode(String input) {
-    String output = "";
+std::string base64Encode(const std::string& input) {
+    std::string output = "";
     int val = 0;
     int valb = -6;
     
@@ -106,8 +110,8 @@ String base64Encode(String input) {
     return output;
 }
 
-String base64Decode(String input) {
-    String output = "";
+std::string base64Decode(const std::string& input) {
+    std::string output = "";
     int val = 0;
     int valb = -8;
     
@@ -137,12 +141,12 @@ String base64Decode(String input) {
     return output;
 }
 
-void base64Command(String operation, String text) {
+void base64Command(const std::string& operation, const std::string& text) {
     if (operation == "encode") {
-        String encoded = base64Encode(text);
+        std::string encoded = base64Encode(text);
         printLine("Encoded: " + encoded);
     } else if (operation == "decode") {
-        String decoded = base64Decode(text);
+        std::string decoded = base64Decode(text);
         printLine("Decoded: " + decoded);
     } else {
         printLine("Usage: base64 encode <text>");
@@ -268,14 +272,16 @@ float applyOp(float a, float b, char op) {
     return 0;
 }
 
-bool isFunction(const String& expr, int pos, const String& func) {
+bool isFunction(const std::string& expr, int pos, const std::string& func) {
     int len = func.length();
-    if (pos + len > expr.length()) return false;
-    return expr.substring(pos, pos + len).equalsIgnoreCase(func);
+    if (pos + len > (int)expr.length()) return false;
+    std::string substr = expr.substr(pos, len);
+    std::transform(substr.begin(), substr.end(), substr.begin(), ::tolower);
+    return substr == func;
 }
 
-String getFunctionName(const String& expr, int pos) {
-    String functions[] = {
+std::string getFunctionName(const std::string& expr, int pos) {
+    std::string functions[] = {
         "sqrt", "sin", "cos", "tan", "asin", "acos", "atan",
         "sinh", "cosh", "tanh", "log", "ln", "exp",
         "abs", "ceil", "floor", "round"
@@ -288,7 +294,7 @@ String getFunctionName(const String& expr, int pos) {
     return "";
 }
 
-float applyFunction(const String& func, float value) {
+float applyFunction(const std::string& func, float value) {
     if (func == "sqrt") return sqrt(value);
     if (func == "sin") return sin(value);
     if (func == "cos") return cos(value);
@@ -309,10 +315,18 @@ float applyFunction(const String& func, float value) {
     return value;
 }
 
-void calc(String expression) {
-    expression.replace(" ", "");
-    expression.replace("pi", String(PI, 10));
-    expression.replace("e", String(E, 10));
+void calc(const std::string& expression_in) {
+    std::string expression = expression_in;
+    size_t pos = expression.find("pi");
+    while (pos != std::string::npos) {
+        expression.replace(pos, 2, std::to_string(PI));
+        pos = expression.find("pi", pos + std::to_string(PI).length());
+    }
+    pos = expression.find("e");
+    while (pos != std::string::npos) {
+        expression.replace(pos, 1, std::to_string(E));
+        pos = expression.find("e", pos + std::to_string(E).length());
+    }
     
     if (expression.length() == 0) {
         printLine("Error: Empty expression");
@@ -321,7 +335,7 @@ void calc(String expression) {
     
     float values[50];
     char ops[50];
-    String functions[50];
+    std::string functions[50];
     int vTop = -1;
     int oTop = -1;
     int fTop = -1;
@@ -329,7 +343,7 @@ void calc(String expression) {
     int n = expression.length();
     
     for (int i = 0; i < n; i++) {
-        String funcName = getFunctionName(expression, i);
+        std::string funcName = getFunctionName(expression, i);
         if (funcName.length() > 0) {
             i += funcName.length();
             functions[++fTop] = funcName;
@@ -403,7 +417,7 @@ void calc(String expression) {
             ops[++oTop] = expression[i];
         }
         else {
-            printLine("Error: Invalid character '" + String(expression[i]) + "'");
+            printLine("Error: Invalid character '" + std::string(1, expression[i]) + "'");
             return;
         }
     }
@@ -427,9 +441,11 @@ void calc(String expression) {
     float result = values[vTop];
     
     if (result == (int)result && abs(result) < 1000000) {
-        printLine("Result: " + String((int)result));
+        printLine("Result: " + std::to_string((int)result));
     } else {
-        printLine("Result: " + String(result, 6));
+        char buf[32];
+        sprintf(buf, "Result: %.6f", result);
+        printLine(buf);
     }
 }
 
@@ -444,9 +460,13 @@ void showMem() {
     float mikb = mibytes / 1024.0;
     float makb = mabytes / 1024.0;
 
-    printLine("Free Heap: " + String(ESP.getFreeHeap()) + " bytes" + " ("+String(fkb, 2)+" KB)");
-    printLine("Min Free Heap: " + String(ESP.getMinFreeHeap()) + " bytes" + " ("+String(mikb, 2)+" KB)");
-    printLine("Max Alloc Heap: " + String(ESP.getMaxAllocHeap()) + " bytes" + " ("+String(makb, 2)+" KB)");
+    char buf[100];
+    sprintf(buf, "Free Heap: %u bytes (%.2f KB)", ESP.getFreeHeap(), fkb);
+    printLine(buf);
+    sprintf(buf, "Min Free Heap: %u bytes (%.2f KB)", ESP.getMinFreeHeap(), mikb);
+    printLine(buf);
+    sprintf(buf, "Max Alloc Heap: %u bytes (%.2f KB)", ESP.getMaxAllocHeap(), makb);
+    printLine(buf);
 }
 
 
@@ -455,7 +475,7 @@ void showUptime() {
     unsigned long h = s / 3600;
     unsigned long m = (s % 3600) / 60;
     unsigned long sec = s % 60;
-    printLine("Uptime: " + String(h) + "h " + String(m) + "m " + String(sec) + "s");
+    printLine("Uptime: " + std::to_string(h) + "h " + std::to_string(m) + "m " + std::to_string(sec) + "s");
 }
 
 void doReboot() {
@@ -465,29 +485,29 @@ void doReboot() {
 }
 
 void showChipInfo() {
-    printLine("Chip Model: " + String(ESP.getChipModel()));
-    printLine("Chip Cores: " + String(ESP.getChipCores()));
-    printLine("Chip Revision: " + String(ESP.getChipRevision()));
+    printLine("Chip Model: " + std::string(ESP.getChipModel()));
+    printLine("Chip Cores: " + std::to_string(ESP.getChipCores()));
+    printLine("Chip Revision: " + std::to_string(ESP.getChipRevision()));
 }
 void showCPUInfo() {
     printLine(
         "CPU: " +
-        String(ESP.getCpuFreqMHz()) + " MHz"
+        std::to_string(ESP.getCpuFreqMHz()) + " MHz"
     );
 }
 void showFlashInfo() {
     uint32_t flashSize = ESP.getFlashChipSize() / 1024 / 1024;
     printLine(
         "Flash: " +
-        String(flashSize) + " MB"
+        std::to_string(flashSize) + " MB"
     );
-    printLine("Flash Speed: " + String(ESP.getFlashChipSpeed() / 1000000) + " MHz");
+    printLine("Flash Speed: " + std::to_string(ESP.getFlashChipSpeed() / 1000000) + " MHz");
 }
 void showWiFiInfo() {
     if (WiFi.isConnected()) {
-        printLine("WiFi RSSI: " + String(WiFi.RSSI()) + " dBm");
-        printLine("WiFi Channel: " + String(WiFi.channel()));
-        printLine("MAC: " + WiFi.macAddress());
+        printLine("WiFi RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+        printLine("WiFi Channel: " + std::to_string(WiFi.channel()));
+        printLine("MAC: " + std::string(WiFi.macAddress().c_str()));
     } else {
         printLine("WiFi: Disconnected");
     }
@@ -526,47 +546,54 @@ void fetch() {
 
     }
 
-void echoCommand(String text) {
+void echoCommand(const std::string& text) {
     printLine(text);
 }
 
 
 struct CommandArgs {
-    String cmd;
-    String arg1;
-    String arg2;
-    String rest;
+    std::string cmd;
+    std::string arg1;
+    std::string arg2;
+    std::string rest;
 };
 
-CommandArgs parseCommand(String input) {
+CommandArgs parseCommand(const std::string& input_in) {
     CommandArgs args;
-    input.trim();
+    std::string input = input_in;
     
-    int firstSpace = input.indexOf(' ');
-    if (firstSpace == -1) {
+    input.erase(0, input.find_first_not_of(" \t\n\r\f\v"));
+    input.erase(input.find_last_not_of(" \t\n\r\f\v") + 1);
+    
+    size_t firstSpace = input.find(' ');
+    if (firstSpace == std::string::npos) {
         args.cmd = input;
         return args;
     }
     
-    args.cmd = input.substring(0, firstSpace);
-    String remainder = input.substring(firstSpace + 1);
-    remainder.trim();
+    args.cmd = input.substr(0, firstSpace);
+    std::string remainder = input.substr(firstSpace + 1);
     
-    int secondSpace = remainder.indexOf(' ');
-    if (secondSpace == -1) {
+    remainder.erase(0, remainder.find_first_not_of(" \t\n\r\f\v"));
+    remainder.erase(remainder.find_last_not_of(" \t\n\r\f\v") + 1);
+    
+    size_t secondSpace = remainder.find(' ');
+    if (secondSpace == std::string::npos) {
         args.arg1 = remainder;
         return args;
     }
     
-    args.arg1 = remainder.substring(0, secondSpace);
-    args.rest = remainder.substring(secondSpace + 1);
-    args.rest.trim();
+    args.arg1 = remainder.substr(0, secondSpace);
+    args.rest = remainder.substr(secondSpace + 1);
+    args.rest.erase(0, args.rest.find_first_not_of(" \t\n\r\f\v"));
+    args.rest.erase(args.rest.find_last_not_of(" \t\n\r\f\v") + 1);
     
-    int thirdSpace = args.rest.indexOf(' ');
-    if (thirdSpace != -1) {
-        args.arg2 = args.rest.substring(0, thirdSpace);
-        args.rest = args.rest.substring(thirdSpace + 1);
-        args.rest.trim();
+    size_t thirdSpace = args.rest.find(' ');
+    if (thirdSpace != std::string::npos) {
+        args.arg2 = args.rest.substr(0, thirdSpace);
+        args.rest = args.rest.substr(thirdSpace + 1);
+        args.rest.erase(0, args.rest.find_first_not_of(" \t\n\r\f\v"));
+        args.rest.erase(args.rest.find_last_not_of(" \t\n\r\f\v") + 1);
     } else if (args.rest.length() > 0) {
         args.arg2 = args.rest;
         args.rest = "";
@@ -575,13 +602,15 @@ CommandArgs parseCommand(String input) {
     return args;
 }
 
-void runCommand(String cmd) {
-    cmd.trim();
+void runCommand(const std::string& cmd_in) {
+    std::string cmd = cmd_in;
+    cmd.erase(0, cmd.find_first_not_of(" \t\n\r\f\v"));
+    cmd.erase(cmd.find_last_not_of(" \t\n\r\f\v") + 1);
     
     if (cmd.length() == 0){
         if(currentCursorY>=MAX_Y){
             clearScreen();
-            tft.print("> ");
+            currentCursorY=0;
         }
         return;
     }
@@ -589,8 +618,8 @@ void runCommand(String cmd) {
     addToHistory(cmd);
     
     CommandArgs args = parseCommand(cmd);
-    String baseCmd = args.cmd;
-    baseCmd.toLowerCase();
+    std::string baseCmd = args.cmd;
+    std::transform(baseCmd.begin(), baseCmd.end(), baseCmd.begin(), ::tolower);
     
     if (baseCmd == "write") {
         if (args.arg1.length() == 0 || args.rest.length() == 0) {
@@ -703,7 +732,7 @@ void runCommand(String cmd) {
     }
     else if (baseCmd == "clear" || baseCmd == "cls") {
         clearScreen();
-        tft.print("> ");
+        
     }
     else if (baseCmd == "history" || baseCmd == "hist") {
         showHistory();
@@ -719,7 +748,12 @@ void runCommand(String cmd) {
             printLine("Usage: kill <pid>");
             return;
         }
-        int pid = args.arg1.toInt();
+        int pid = 0;
+        try {
+            pid = std::stoi(args.arg1);
+        } catch (...) {
+            pid = 0;
+        }
         if (pid <= 0) {
             printLine("Invalid PID");
             return;
@@ -757,8 +791,8 @@ void runCommand(String cmd) {
             return;
         }
         
-        String operation = args.arg1;
-        String text = args.arg2;
+        std::string operation = args.arg1;
+        std::string text = args.arg2;
         if (args.rest.length() > 0) {
             text = args.arg2 + " " + args.rest;
         }
@@ -785,7 +819,12 @@ void runCommand(String cmd) {
             printLine("Usage: timer <seconds>");
             return;
         }
-        int seconds = args.arg1.toInt();
+        int seconds = 0;
+        try {
+            seconds = std::stoi(args.arg1);
+        } catch (...) {
+            seconds = 0;
+        }
         if (seconds <= 0) {
             printLine("Invalid time");
             return;
@@ -798,8 +837,8 @@ void runCommand(String cmd) {
     else if (baseCmd == "alarm") {
         if (args.arg1.length() == 0) {
             if (systemAlarm.active) {
-                printLine("Alarm set for " + String(systemAlarm.hour) + ":" + 
-                         (systemAlarm.minute < 10 ? "0" : "") + String(systemAlarm.minute));
+                printLine("Alarm set for " + std::to_string(systemAlarm.hour) + ":" + 
+                         (systemAlarm.minute < 10 ? "0" : "") + std::to_string(systemAlarm.minute));
             } else {
                 printLine("No alarm set.");
             }
@@ -828,7 +867,7 @@ void runCommand(String cmd) {
             return;
         }
         
-        int mode = args.arg1.toInt();
+        int mode = std::stoi(args.arg1);
         if (mode < 1 || mode > 7) {
             printLine("Invalid mode. Use 1-7.");
             return;
@@ -842,8 +881,15 @@ void runCommand(String cmd) {
             printLine("Example: graph sin(x) red");
             return;
         }
-        String color = args.arg2.length() > 0 ? args.arg2 : "blue";
+        std::string color = args.arg2.length() > 0 ? args.arg2 : "blue";
         funcToGraph(args.arg1, color);
+    }
+    else if (baseCmd == "username" || baseCmd == "name") {
+        if (args.arg1.length() == 0 || args.arg2.length() != 0) {
+            printLine("Usage: username <name>");
+            return;
+        }
+        setDeviceName(args.arg1);
     }
     else if (baseCmd == "help" || baseCmd == "h") {
         if (args.arg1.length() == 0) {

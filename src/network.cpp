@@ -4,9 +4,10 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ESP32Ping.h>
+#include <string>
 
-String WIFI_SSID = "";
-String WIFI_PASS = "";
+std::string WIFI_SSID = "";
+std::string WIFI_PASS = "";
 NetworkStatus networkStatus = NET_DISCONNECTED;
 extern bool inputLocked;
 
@@ -16,9 +17,9 @@ void connectWiFi() {
     
     if (WiFi.status() == WL_CONNECTED) {
         printLine("Already connected!");
-        printLine("SSID: " + WiFi.SSID());
-        printLine("IP: " + WiFi.localIP().toString());
-        printLine("RSSI: " + String(WiFi.RSSI()) + " dBm");
+        printLine("SSID: " + std::string(WiFi.SSID().c_str()));
+        printLine("IP: " + std::string(WiFi.localIP().toString().c_str()));
+        printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
         inputLocked = false;
         return;
     }
@@ -37,7 +38,7 @@ void connectWiFi() {
                 }
             } else if (c == '\b' || c == 127) {
                 if (WIFI_SSID.length() > 0) {
-                    WIFI_SSID.remove(WIFI_SSID.length() - 1);
+                    WIFI_SSID.pop_back();
                     Serial.write('\b'); Serial.write(' '); Serial.write('\b');
                 }
             } else if (c >= 32 && c <= 126) {
@@ -47,7 +48,8 @@ void connectWiFi() {
         }
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    WIFI_SSID.trim();
+    WIFI_SSID.erase(0, WIFI_SSID.find_first_not_of(" \t\n\r\f\v"));
+    WIFI_SSID.erase(WIFI_SSID.find_last_not_of(" \t\n\r\f\v") + 1);
     
     while (Serial.available() > 0) Serial.read();
     
@@ -63,7 +65,7 @@ void connectWiFi() {
                 }
             } else if (c == '\b' || c == 127) {
                 if (WIFI_PASS.length() > 0) {
-                    WIFI_PASS.remove(WIFI_PASS.length() - 1);
+                    WIFI_PASS.pop_back();
                     Serial.write('\b'); Serial.write(' '); Serial.write('\b');
                 }
             } else if (c >= 32 && c <= 126) {
@@ -73,7 +75,8 @@ void connectWiFi() {
         }
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    WIFI_PASS.trim();
+    WIFI_PASS.erase(0, WIFI_PASS.find_first_not_of(" \t\n\r\f\v"));
+    WIFI_PASS.erase(WIFI_PASS.find_last_not_of(" \t\n\r\f\v") + 1);
     
     inputLocked = false;
     
@@ -91,9 +94,9 @@ void connectWiFi() {
     if (WiFi.status() == WL_CONNECTED) {
         printLine("");
         printLine("Connected!");
-        printLine("SSID: " + WiFi.SSID());
-        printLine("IP: " + WiFi.localIP().toString());
-        printLine("RSSI: " + String(WiFi.RSSI()) + " dBm");
+        printLine("SSID: " + std::string(WiFi.SSID().c_str()));
+        printLine("IP: " + std::string(WiFi.localIP().toString().c_str()));
+        printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
         syncTime();
     } else {
         printLine("");
@@ -120,16 +123,17 @@ void scanWiFi() {
     if (n == 0) {
         printLine("No networks found");
     } else {
-        printLine("Found " + String(n) + " networks:");
+        printLine("Found " + std::to_string(n) + " networks:");
         printLine("");
         printLine("  SSID                   RSSI  Ch  Enc");
         printLine("  ----------------------------------------");
         
         for (int i = 0; i < n; i++) {
-            String ssid = WiFi.SSID(i);
-            if (ssid.length() > 20) ssid = ssid.substring(0, 20);
+            String ssid_s = WiFi.SSID(i);
+            std::string ssid = std::string(ssid_s.c_str());
+            if (ssid.length() > 20) ssid = ssid.substr(0, 20);
             
-            String encryption;
+            std::string encryption;
             switch (WiFi.encryptionType(i)) {
                 case WIFI_AUTH_OPEN: encryption = "Open"; break;
                 case WIFI_AUTH_WEP: encryption = "WEP"; break;
@@ -159,21 +163,21 @@ void showNetworkInfo() {
         return;
     }
     
-    printLine("IP Address: " + WiFi.localIP().toString());
-    printLine("Gateway: " + WiFi.gatewayIP().toString());
-    printLine("Subnet: " + WiFi.subnetMask().toString());
-    printLine("DNS: " + WiFi.dnsIP().toString());
-    printLine("MAC: " + WiFi.macAddress());
-    printLine("RSSI: " + String(WiFi.RSSI()) + " dBm");
-    printLine("Channel: " + String(WiFi.channel()));
+    printLine("IP Address: " + std::string(WiFi.localIP().toString().c_str()));
+    printLine("Gateway: " + std::string(WiFi.gatewayIP().toString().c_str()));
+    printLine("Subnet: " + std::string(WiFi.subnetMask().toString().c_str()));
+    printLine("DNS: " + std::string(WiFi.dnsIP().toString().c_str()));
+    printLine("MAC: " + std::string(WiFi.macAddress().c_str()));
+    printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+    printLine("Channel: " + std::to_string(WiFi.channel()));
 }
 
 bool isConnected() {
     return WiFi.status() == WL_CONNECTED;
 }
 
-String getLocalIP() {
-    return WiFi.localIP().toString();
+std::string getLocalIP() {
+    return std::string(WiFi.localIP().toString().c_str());
 }
 
 int getSignalStrength() {
@@ -181,14 +185,14 @@ int getSignalStrength() {
 }
 
 
-void curlURL(String url) {
+void curlURL(const std::string& url) {
     CurlOptions opts;
     opts.url = url;
     opts.verbose = false;
     curlWithOptions(opts);
 }
 
-void curlURLVerbose(String url) {
+void curlURLVerbose(const std::string& url) {
     CurlOptions opts;
     opts.url = url;
     opts.verbose = true;
@@ -202,28 +206,29 @@ void curlWithOptions(CurlOptions opts) {
         return;
     }
 
-    if (!opts.url.startsWith("http://") && !opts.url.startsWith("https://")) {
+    if (opts.url.substr(0, 7) != "http://" && opts.url.substr(0, 8) != "https://") {
         printLine("curl: invalid URL (must start with http:// or https://)");
         return;
     }
 
     HTTPClient http;
-    http.begin(opts.url);
+    http.begin(opts.url.c_str());
     http.setTimeout(opts.timeout);
     
     if (opts.followRedirects) {
         http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     }
     
-    http.setUserAgent(opts.userAgent);
+    http.setUserAgent(opts.userAgent.c_str());
     
     for (int i = 0; i < opts.headerCount; i++) {
-        int colonPos = opts.headers[i].indexOf(':');
+        int colonPos = opts.headers[i].find(':');
         if (colonPos > 0) {
-            String headerName = opts.headers[i].substring(0, colonPos);
-            String headerValue = opts.headers[i].substring(colonPos + 1);
-            headerValue.trim();
-            http.addHeader(headerName, headerValue);
+            std::string headerName = opts.headers[i].substr(0, colonPos);
+            std::string headerValue = opts.headers[i].substr(colonPos + 1);
+            headerValue.erase(0, headerValue.find_first_not_of(" \t"));
+            headerValue.erase(headerValue.find_last_not_of(" \t") + 1);
+            http.addHeader(headerName.c_str(), headerValue.c_str());
         }
     }
     
@@ -236,9 +241,9 @@ void curlWithOptions(CurlOptions opts) {
     int code;
     
     if (opts.method == "POST") {
-        code = http.POST(opts.data);
+        code = http.POST(opts.data.c_str());
     } else if (opts.method == "PUT") {
-        code = http.PUT(opts.data);
+        code = http.PUT(opts.data.c_str());
     } else if (opts.method == "DELETE") {
         code = http.sendRequest("DELETE");
     } else {
@@ -249,35 +254,35 @@ void curlWithOptions(CurlOptions opts) {
     
     if (code <= 0) {
         printLine("curl: connection failed");
-        printLine("Error: " + http.errorToString(code));
+        printLine("Error: " + std::string(http.errorToString(code).c_str()));
         http.end();
         return;
     }
 
     if (opts.verbose) {
-        printLine("< HTTP/1.1 " + String(code) + " " + getStatusText(code));
-        printLine("< Request-Time: " + String(duration) + "ms");
+        printLine("< HTTP/1.1 " + std::to_string(code) + " " + getStatusText(code));
+        printLine("< Request-Time: " + std::to_string(duration) + "ms");
     } else {
-        printLine("HTTP " + String(code) + " - " + String(duration) + "ms");
+        printLine("HTTP " + std::to_string(code) + " - " + std::to_string(duration) + "ms");
     }
     
     if (opts.verbose) {
         if (http.hasHeader("Content-Type")) {
-            printLine("< Content-Type: " + http.header("Content-Type"));
+            printLine("< Content-Type: " + std::string(http.header("Content-Type").c_str()));
         }
         if (http.hasHeader("Content-Length")) {
-            printLine("< Content-Length: " + http.header("Content-Length"));
+            printLine("< Content-Length: " + std::string(http.header("Content-Length").c_str()));
         }
         if (http.hasHeader("Server")) {
-            printLine("< Server: " + http.header("Server"));
+            printLine("< Server: " + std::string(http.header("Server").c_str()));
         }
         printLine("");
     }
-
     
     if (code == HTTP_CODE_OK) {
         int contentLength = http.getSize();
-        String contentType = http.header("Content-Type");
+        String contentType_s = http.header("Content-Type");
+        std::string contentType = std::string(contentType_s.c_str());
         
         if (isBinaryContent(contentType)) {
             printLine("Binary content (" + contentType + ")");
@@ -285,13 +290,14 @@ void curlWithOptions(CurlOptions opts) {
             printLine("Cannot display binary data");
         } else {
            
-            String payload = http.getString();
+            String payload_s = http.getString();
+            std::string payload = std::string(payload_s.c_str());
             int len = payload.length();
             
             if (len > 1500) {
-                printLine(payload.substring(0, 1500));
+                printLine(payload.substr(0, 1500));
                 printLine("");
-                printLine("... (+" + String(len - 1500) + " bytes)");
+                printLine("... (+" + std::to_string(len - 1500) + " bytes)");
                 printLine("Response truncated at 1500 bytes");
             } else if (len > 0) {
                 printLine(payload);
@@ -301,14 +307,15 @@ void curlWithOptions(CurlOptions opts) {
         }
     } else if (code >= 300 && code < 400) {
         if (http.hasHeader("Location")) {
-            printLine("Redirect to: " + http.header("Location"));
+            printLine("Redirect to: " + std::string(http.header("Location").c_str()));
         }
     } else if (code >= 400) {
         
-        printLine("Error " + String(code) + ": " + getStatusText(code));
-        String payload = http.getString();
+        printLine("Error " + std::to_string(code) + ": " + getStatusText(code));
+        String payload_s = http.getString();
+        std::string payload = std::string(payload_s.c_str());
         if (payload.length() > 300) {
-            printLine(payload.substring(0, 300) + "...");
+            printLine(payload.substr(0, 300) + "...");
         } else if (payload.length() > 0) {
             printLine(payload);
         }
@@ -317,40 +324,40 @@ void curlWithOptions(CurlOptions opts) {
     http.end();
 }
 
-String httpGet(String url) {
+std::string httpGet(const std::string& url) {
     if (!isConnected()) return "";
     
     HTTPClient http;
-    http.begin(url);
+    http.begin(url.c_str());
     http.setTimeout(10000);
     
     int code = http.GET();
-    String result = "";
+    std::string result = "";
     
     if (code == HTTP_CODE_OK) {
-        result = http.getString();
+        result = std::string(http.getString().c_str());
     }
     
     http.end();
     return result;
 }
 
-int httpPost(String url, String data) {
+int httpPost(const std::string& url, const std::string& data) {
     if (!isConnected()) return -1;
     
     HTTPClient http;
-    http.begin(url);
+    http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
     http.setTimeout(10000);
     
-    int code = http.POST(data);
+    int code = http.POST(data.c_str());
     http.end();
     
     return code;
 }
 
 
-void pingHost(String host) {
+void pingHost(const std::string& host) {
     if (!isConnected()) {
         printLine("ping: not connected to WiFi");
         return;
@@ -364,7 +371,7 @@ void pingHost(String host) {
         return;
     }
     
-    printLine("Pinging " + ip.toString() + "...");
+    printLine("Pinging " + std::string(ip.toString().c_str()) + "...");
     
     int sent = 0;
     int received = 0;
@@ -385,10 +392,10 @@ void pingHost(String host) {
             if (time < minTime) minTime = time;
             if (time > maxTime) maxTime = time;
             
-            printLine(String(i + 1) + ": Reply from " + ip.toString() + 
-                     " time=" + String(time, 1) + "ms");
+            printLine(std::to_string(i + 1) + ": Reply from " + std::string(ip.toString().c_str()) + 
+                     " time=" + std::to_string(time) + "ms");
         } else {
-            printLine(String(i + 1) + ": Request timeout");
+            printLine(std::to_string(i + 1) + ": Request timeout");
         }
         
         if (i < 3) {
@@ -398,19 +405,19 @@ void pingHost(String host) {
     
     printLine("");
     printLine("--- " + host + " ping statistics ---");
-    printLine(String(sent) + " packets sent, " + String(received) + " received, " +
-             String(((sent - received) * 100) / sent) + "% packet loss");
+    printLine(std::to_string(sent) + " packets sent, " + std::to_string(received) + " received, " +
+             std::to_string(((sent - received) * 100) / sent) + "% packet loss");
     
     if (received > 0) {
         float avgTime = totalTime / received;
         printLine("Round-trip min/avg/max = " + 
-                 String(minTime, 1) + "/" + 
-                 String(avgTime, 1) + "/" + 
-                 String(maxTime, 1) + " ms");
+                 std::to_string(minTime) + "/" + 
+                 std::to_string(avgTime) + "/" + 
+                 std::to_string(maxTime) + " ms");
     }
 }
 
-void dnsLookup(String hostname) {
+void dnsLookup(const std::string& hostname) {
     if (!isConnected()) {
         printLine("dns: not connected to WiFi");
         return;
@@ -420,14 +427,14 @@ void dnsLookup(String hostname) {
     
     IPAddress ip;
     if (WiFi.hostByName(hostname.c_str(), ip)) {
-        printLine("IP Address: " + ip.toString());
+        printLine("IP Address: " + std::string(ip.toString().c_str()));
     } else {
         printLine("DNS lookup failed");
     }
 }
 
 
-String getStatusText(int code) {
+std::string getStatusText(int code) {
     switch(code) {
         case 200: return "OK";
         case 201: return "Created";
@@ -448,24 +455,29 @@ String getStatusText(int code) {
     }
 }
 
-String formatBytes(int bytes) {
+std::string formatBytes(int bytes) {
     if (bytes < 1024) {
-        return String(bytes) + " B";
+        return std::to_string(bytes) + " B";
     } else if (bytes < 1024 * 1024) {
-        return String(bytes / 1024.0, 2) + " KB";
+        char buffer[16];
+        sprintf(buffer, "%.2f KB", bytes / 1024.0);
+        return std::string(buffer);
     } else {
-        return String(bytes / 1024.0 / 1024.0, 2) + " MB";
+        char buffer[16];
+        sprintf(buffer, "%.2f MB", bytes / 1024.0 / 1024.0);
+        return std::string(buffer);
     }
 }
 
-bool isBinaryContent(String contentType) {
-    contentType.toLowerCase();
-    return contentType.indexOf("image/") >= 0 ||
-           contentType.indexOf("video/") >= 0 ||
-           contentType.indexOf("audio/") >= 0 ||
-           contentType.indexOf("application/pdf") >= 0 ||
-           contentType.indexOf("application/zip") >= 0 ||
-           contentType.indexOf("application/octet-stream") >= 0;
+bool isBinaryContent(const std::string& contentType) {
+    std::string lowercase = contentType;
+    std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
+    return lowercase.find("image/") != std::string::npos ||
+           lowercase.find("video/") != std::string::npos ||
+           lowercase.find("audio/") != std::string::npos ||
+           lowercase.find("application/pdf") != std::string::npos ||
+           lowercase.find("application/zip") != std::string::npos ||
+           lowercase.find("application/octet-stream") != std::string::npos;
 }
 
 

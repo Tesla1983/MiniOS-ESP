@@ -1,6 +1,7 @@
 #include "theme.h"
 #include "display.h"
 #include <Adafruit_ST7789.h>
+#include <string>
 
 Theme themes[] = {
     {ST77XX_BLACK, ST77XX_GREEN, "matrix"},
@@ -21,30 +22,30 @@ void initThemes() {}
 void listThemes() {
     printLine("Available themes:");
     for (int i = 0; i < themeCount; i++) {
-        String marker = (i == currentTheme) ? " *" : "";
-        printLine(String(i) + ": " + themes[i].name + marker);
+        std::string marker = (i == currentTheme) ? " *" : "";
+        printLine(std::to_string(i) + ": " + themes[i].name + marker);
     }
 }
 
-void setTheme(String tn) {
-    int themeNum = tn.toInt();
-    
-    if (tn == "0" || themeNum > 0) {
-        if (themeNum >= 0 && themeNum < themeCount) {
-            currentTheme = themeNum;
-            applyTheme();
-            printLine("Theme set: " + String(themes[currentTheme].name));
-            return;
-        }
-    }
-    
+void setTheme(const std::string& tn) {
     for (int i = 0; i < themeCount; i++) {
         if (tn == themes[i].name) {
             currentTheme = i;
             applyTheme();
-            printLine("Theme set: " + String(themes[currentTheme].name));
+            printLine("Theme set: " + std::string(themes[currentTheme].name));
             return;
         }
+    }
+    
+    try {
+        int themeNum = std::stoi(tn);
+        if (themeNum >= 0 && themeNum < themeCount) {
+            currentTheme = themeNum;
+            applyTheme();
+            printLine("Theme set: " + std::string(themes[currentTheme].name));
+            return;
+        }
+    } catch (...) {
     }
     
     printLine("Invalid theme.");

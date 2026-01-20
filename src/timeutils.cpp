@@ -11,6 +11,8 @@
 #include <time.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <string>
+#include <sstream>
 
 Alarm systemAlarm = {false, 0, 0, ""};
 
@@ -47,7 +49,7 @@ void syncTime() {
     }
 }
 
-String getTime() {
+std::string getTime() {
     time_t now = time(nullptr);
     
     if (now < 100000) {
@@ -63,7 +65,7 @@ String getTime() {
             t->tm_hour,
             t->tm_min,
             t->tm_sec);
-    return String(buf);
+    return std::string(buf);
 }
 
 void showCalendar() {
@@ -83,7 +85,7 @@ void showCalendar() {
         "July", "August", "September", "October", "November", "December"
     };
     
-    printLine(String(monthNames[month - 1]) + " " + String(year));
+    printLine(std::string(monthNames[month - 1]) + " " + std::to_string(year));
     printLine("Mo Tu We Th Fr Sa Su");
     
     struct tm firstDay = *t;
@@ -96,18 +98,18 @@ void showCalendar() {
         daysInMonth[1] = 29;
     }
     
-    String line = "";
+    std::string line = "";
     for (int i = 0; i < startDay; i++) {
         line += "   ";
     }
     
     for (int d = 1; d <= daysInMonth[month - 1]; d++) {
         if (d == day) {
-            line += "[" + String(d) + "]";
+            line += "[" + std::to_string(d) + "]";
             if (d < 10) line += " ";
         } else {
             if (d < 10) line += " ";
-            line += String(d) + " ";
+            line += std::to_string(d) + " ";
         }
         
         if ((startDay + d) % 7 == 0) {
@@ -126,7 +128,7 @@ void timerCommand(int seconds) {
         return;
     }
     
-    printLine("Timer started for " + String(seconds) + " seconds.");
+    printLine("Timer started for " + std::to_string(seconds) + " seconds.");
     printLine("Press ENTER to cancel...");
     
     unsigned long startTime = millis();
@@ -143,7 +145,7 @@ void timerCommand(int seconds) {
         
         unsigned long remaining = (endTime - millis()) / 1000;
         if (remaining != ((endTime - millis() - 1000) / 1000)) {
-            printLine(String(remaining) + " seconds remaining...");
+            printLine(std::to_string(remaining) + " seconds remaining...");
         }
         
         vTaskDelay(100 / portTICK_PERIOD_MS);  
@@ -162,7 +164,7 @@ void stopwatchCommand() {
     Theme currenttheme = getCurrentTheme();
     unsigned long startTime = millis();
     unsigned long lastUpdate = 0;
-    String lastTime = "";
+    std::string lastTime = "";
     int16_t timeX = tft.getCursorX();
     int16_t timeY = tft.getCursorY();
     
@@ -177,8 +179,8 @@ void stopwatchCommand() {
                 unsigned long m = (s % 3600) / 60;
                 unsigned long sec = s % 60;
                 printLine("");
-                printLine("Stopped at: " + String(h) + "h " + String(m) + "m " + 
-                          String(sec) + "s " + String(ms) + "ms");
+                printLine("Stopped at: " + std::to_string(h) + "h " + std::to_string(m) + "m " + 
+                          std::to_string(sec) + "s " + std::to_string(ms) + "ms");
                         
                 return;
             }
@@ -192,16 +194,16 @@ void stopwatchCommand() {
             unsigned long m = (s % 3600) / 60;
             unsigned long sec = s % 60;
             
-            String currentTime = String(h) + "h " + String(m) + "m " + String(sec) + "s";
+            std::string currentTime = std::to_string(h) + "h " + std::to_string(m) + "m " + std::to_string(sec) + "s";
             
             if (currentTime != lastTime) {
                 tft.setCursor(timeX+5, timeY);
                 tft.setTextColor(currenttheme.bg);
-                tft.print(lastTime);
+                tft.print(lastTime.c_str());
 
                 tft.setCursor(timeX+5, timeY);
                 tft.setTextColor(currenttheme.fg);
-                tft.print(currentTime);
+                tft.print(currentTime.c_str());
                 
                 lastTime = currentTime;
             }
@@ -210,30 +212,30 @@ void stopwatchCommand() {
     }
 }
 
-void setAlarm(String timeStr) {
-    int colonPos = timeStr.indexOf(':');
-    if (colonPos == -1) {
+void setAlarm(const std::string& timeStr) {
+    size_t colonPos = timeStr.find(':');
+    if (colonPos == std::string::npos) {
         printLine("Usage: alarm HH:MM [message]");
         printLine("Example: alarm 14:30 Meeting time");
         return;
     }
     
-    String hourStr = timeStr.substring(0, colonPos);
-    String rest = timeStr.substring(colonPos + 1);
+    std::string hourStr = timeStr.substr(0, colonPos);
+    std::string rest = timeStr.substr(colonPos + 1);
     
-    int spacePos = rest.indexOf(' ');
-    String minuteStr;
-    String message = "";
+    size_t spacePos = rest.find(' ');
+    std::string minuteStr;
+    std::string message = "";
     
-    if (spacePos != -1) {
-        minuteStr = rest.substring(0, spacePos);
-        message = rest.substring(spacePos + 1);
+    if (spacePos != std::string::npos) {
+        minuteStr = rest.substr(0, spacePos);
+        message = rest.substr(spacePos + 1);
     } else {
         minuteStr = rest;
     }
     
-    int hour = hourStr.toInt();
-    int minute = minuteStr.toInt();
+    int hour = std::stoi(hourStr);
+    int minute = std::stoi(minuteStr);
     
     if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
         printLine("Invalid time format.");
@@ -245,8 +247,8 @@ void setAlarm(String timeStr) {
     systemAlarm.minute = minute;
     systemAlarm.message = message;
     
-    printLine("Alarm set for " + String(hour) + ":" + 
-             (minute < 10 ? "0" : "") + String(minute));
+    printLine("Alarm set for " + std::to_string(hour) + ":" + 
+             (minute < 10 ? "0" : "") + std::to_string(minute));
     if (message.length() > 0) {
         printLine("Message: " + message);
     }

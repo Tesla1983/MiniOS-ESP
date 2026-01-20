@@ -4,25 +4,28 @@
 #include "grapher.h"
 #include "commands.h"
 #include <cmath>
+#include <string>
 
 #define E 2.71828182845904523536
 #define PI 3.14159265358979323846
 
-bool evaluateWithX(String expression, float xValue, float& result) {
+bool evaluateWithX(const std::string& expression, float xValue, float& result) {
     // We need to be careful not to replace 'x' in function names like 'exp'
-    String expr = "";
-    for (int i = 0; i < expression.length(); i++) {
+    std::string expr = "";
+    for (int i = 0; i < (int)expression.length(); i++) {
         if (expression[i] == 'x') {
             bool isStandalone = true;
             if (i > 0 && (isalpha(expression[i-1]) || isdigit(expression[i-1]))) {
                 isStandalone = false;
             }
-            if (i < expression.length() - 1 && (isalpha(expression[i+1]) || isdigit(expression[i+1]))) {
+            if (i < (int)expression.length() - 1 && (isalpha(expression[i+1]) || isdigit(expression[i+1]))) {
                 isStandalone = false;
             }
             
             if (isStandalone) {
-                expr += "(" + String(xValue, 6) + ")";
+                char buf[32];
+                sprintf(buf, "(%.6f)", xValue);
+                expr += buf;
             } else {
                 expr += "x";
             }
@@ -31,10 +34,18 @@ bool evaluateWithX(String expression, float xValue, float& result) {
         }
     }
     
-    // Now we can use the existing calc logic from commands.cpp
-    expr.replace(" ", "");
-    expr.replace("pi", String(PI, 10));
-    expr.replace("e", String(E, 10));
+    expr.erase(std::remove(expr.begin(), expr.end(), ' '), expr.end());
+    
+    size_t pos = expr.find("pi");
+    while (pos != std::string::npos) {
+        expr.replace(pos, 2, std::to_string(PI));
+        pos = expr.find("pi", pos + std::to_string(PI).length());
+    }
+    pos = expr.find("e");
+    while (pos != std::string::npos) {
+        expr.replace(pos, 1, std::to_string(E));
+        pos = expr.find("e", pos + std::to_string(E).length());
+    }
     
     if (expr.length() == 0) {
         return false;
@@ -42,14 +53,14 @@ bool evaluateWithX(String expression, float xValue, float& result) {
     
     float values[50];
     char ops[50];
-    String functions[50];
+    std::string functions[50];
     int vTop = -1;
     int oTop = -1;
     int fTop = -1;
     int n = expr.length();
     
     for (int i = 0; i < n; i++) {
-        String funcName = getFunctionName(expr, i);
+        std::string funcName = getFunctionName(expr, i);
         if (funcName.length() > 0) {
             i += funcName.length();
             functions[++fTop] = funcName;
@@ -145,7 +156,7 @@ bool evaluateWithX(String expression, float xValue, float& result) {
     return true;
 }
 
-void funcToGraph(String expression, String lineColour) {
+void funcToGraph(const std::string& expression, const std::string& lineColour) {
     screenLocked = true;
     
     tft.fillScreen(ST77XX_WHITE);
@@ -258,7 +269,6 @@ void funcToGraph(String expression, String lineColour) {
                 screenLocked = false;
                 applyTheme();
                 clearScreen();
-                tft.print("> ");
                 break;
             }
         }

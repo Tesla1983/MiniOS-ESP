@@ -3,20 +3,21 @@
 
 
 #include <Arduino.h>
+#include <string>
 
 void syncTime();
-String getTime();
+std::string getTime();
 void showCalendar();
 void timerCommand(int seconds);
 void stopwatchCommand();
-void setAlarm(String timeStr);
+void setAlarm(const std::string& timeStr);
 void checkAlarm();
 
 struct Alarm {
     bool active;
     int hour;
     int minute;
-    String message;
+    std::string message;
 };
 
 extern Alarm systemAlarm;
