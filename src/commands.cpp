@@ -626,14 +626,14 @@ void runCommand(const std::string& cmd_in) {
             printLine("Usage: write <filename> <text>");
             return;
         }
-        writeFile(args.arg1, args.rest);
+        writeFile(args.arg1, args.arg2 + args.rest);
     }
     else if (baseCmd == "append") {
         if (args.arg1.length() == 0 || args.rest.length() == 0) {
             printLine("Usage: append <filename> <text>");
             return;
         }
-        appendFile(args.arg1, args.rest);
+        appendFile(args.arg1, args.arg2 + args.rest);
     }
     else if (baseCmd == "read") {
         if (args.arg1.length() == 0) {
