@@ -4,7 +4,7 @@
 #include "network.h"
 #include "theme.h"
 #include "config.h"
-#include "pug.h"
+// #include "pug.h"
 #include "timeutils.h"
 #include "kernel.h"
 #include "grapher.h"
@@ -235,7 +235,7 @@ void showHelpDisplay() {
     printLine("  themes          - List themes");
     printLine("  theme <n>       - Select theme");
     printLine("  screensaver <n> - Run screensaver");
-    printLine("  pug             - Show pug image");
+    // printLine("  pug             - Show pug image");
 }
 
 
@@ -622,14 +622,14 @@ void runCommand(const std::string& cmd_in) {
     std::transform(baseCmd.begin(), baseCmd.end(), baseCmd.begin(), ::tolower);
     
     if (baseCmd == "write") {
-        if (args.arg1.length() == 0 || args.rest.length() == 0) {
+        if (args.arg1.length() == 0 || args.arg2.length() == 0) {
             printLine("Usage: write <filename> <text>");
             return;
         }
         writeFile(args.arg1, args.arg2 + args.rest);
     }
     else if (baseCmd == "append") {
-        if (args.arg1.length() == 0 || args.rest.length() == 0) {
+        if (args.arg1.length() == 0 || args.arg2.length() == 0) {
             printLine("Usage: append <filename> <text>");
             return;
         }
@@ -689,13 +689,13 @@ void runCommand(const std::string& cmd_in) {
         }
         
         if (args.arg1 == "-v") {
-            if (args.rest.length() == 0) {
+            if (args.arg2.length() == 0) {
                 printLine("Usage: curl -v <url>");
                 return;
             }
-            curlURLVerbose(args.rest);
+            curlURLVerbose(args.arg2);
         } else {
-            curlURL(args.arg1 + (args.rest.length() > 0 ? " " + args.rest : ""));
+            curlURL(args.arg1);
         }
     }
     else if (baseCmd == "ping") {
@@ -768,7 +768,7 @@ void runCommand(const std::string& cmd_in) {
             printLine("Usage: calc <expression>");
             return;
         }
-        calc(args.arg1 + (args.rest.length() > 0 ? " " + args.rest : ""));
+        calc(args.arg1);
     }
     else if (baseCmd == "hex") {
         if (args.arg1.length() == 0) {
@@ -857,9 +857,9 @@ void runCommand(const std::string& cmd_in) {
         }
         setTheme(args.arg1);
     }
-    else if (baseCmd == "pug") {
-        displayPug();
-    }
+    // else if (baseCmd == "pug") {
+    //     displayPug();
+    // }
     else if (baseCmd == "screensaver" || baseCmd == "ss") {
         if (args.arg1.length() == 0) {
             printLine("Usage: screensaver <mode>");

@@ -8,6 +8,35 @@
 
 #define E 2.71828182845904523536
 #define PI 3.14159265358979323846
+namespace Operation{
+    /*
+    The default applyOp() implementation in commands.cpp contains
+    printLine() calls that interfere with the plotting pipeline.
+    When plotting expressions involving division by a variable
+    (e.g., sin(x)/x at x = 0), a division by zero error message is printed
+    to the display, disrupting the rendered plot.
+    */
+
+    float applyOp(float a, float b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': 
+            if (b == 0) { 
+                return 0;
+            }
+            return a / b;
+        case '%': 
+            if (b == 0) {
+                return 0;
+            }
+            return (int)a % (int)b;
+        case '^': return pow(a, b);
+    }
+    return 0;
+}
+}
 
 bool evaluateWithX(const std::string& expression, float xValue, float& result) {
     // We need to be careful not to replace 'x' in function names like 'exp'
@@ -76,7 +105,7 @@ bool evaluateWithX(const std::string& expression, float xValue, float& result) {
                 float b = values[vTop--];
                 float a = values[vTop--];
                 char op = ops[oTop--];
-                values[++vTop] = applyOp(a, b, op);
+                values[++vTop] = Operation::applyOp(a, b, op);
             }
             if (oTop >= 0) oTop--;
             
@@ -132,7 +161,7 @@ bool evaluateWithX(const std::string& expression, float xValue, float& result) {
                 float b = values[vTop--];
                 float a = values[vTop--];
                 char op = ops[oTop--];
-                values[++vTop] = applyOp(a, b, op);
+                values[++vTop] = Operation::applyOp(a, b, op);
             }
             ops[++oTop] = expr[i];
         }
@@ -147,7 +176,7 @@ bool evaluateWithX(const std::string& expression, float xValue, float& result) {
         float b = values[vTop--];
         float a = values[vTop--];
         char op = ops[oTop--];
-        values[++vTop] = applyOp(a, b, op);
+        values[++vTop] = Operation::applyOp(a, b, op);
     }
     
     if (vTop != 0) return false;

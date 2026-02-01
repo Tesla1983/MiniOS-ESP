@@ -84,10 +84,10 @@ void connectWiFi() {
     WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
     
     int attempts = 0;
+    tft.setCursor(5,currentCursorY);
     while (WiFi.status() != WL_CONNECTED && attempts < 10) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
-        Serial.print(".");
-        tft.print(".");
+        print(".");
         attempts++;
     }
     
