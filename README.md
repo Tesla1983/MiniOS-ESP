@@ -1,6 +1,12 @@
 # MiniOS-ESP Documentation
 
 [![membrowse](https://membrowse.com/badge.svg)](https://membrowse.com/public/VuqarAhadli/MiniOS-ESP)
+![PlatformIO](https://img.shields.io/badge/PlatformIO-supported-brightgreen?logo=platformio)
+![Arduino](https://img.shields.io/badge/Arduino-supported-success?logo=arduino)
+![C++](https://img.shields.io/badge/language-C%2B%2B-blue?logo=c%2B%2B)
+![FreeRTOS](https://img.shields.io/badge/FreeRTOS-yes-orange?logo=freertos)
+![Version](https://img.shields.io/github/v/release/VuqarAhadli/MiniOS-ESP)
+
 
 ## Table of Contents
 1. [Overview](#overview)
