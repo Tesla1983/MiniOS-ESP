@@ -28,7 +28,7 @@ void syncTime() {
     
     int attempts = 0;
     while (time(nullptr) < 100000 && attempts < 20) {
-        vTaskDelay(500 / portTICK_PERIOD_MS);  
+        vTaskDelay(pdMS_TO_TICKS(500));
         Serial.print(".");
         attempts++;
     }
@@ -42,8 +42,7 @@ void syncTime() {
         printLine("Time sync failed.");
     }
     
-    
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     while (Serial.available() > 0) {
         Serial.read();
     }
@@ -133,6 +132,7 @@ void timerCommand(int seconds) {
     
     unsigned long startTime = millis();
     unsigned long endTime = startTime + (seconds * 1000);
+    unsigned long lastPrint = 0;
     
     while (millis() < endTime) {
         if (Serial.available()) {
@@ -144,17 +144,18 @@ void timerCommand(int seconds) {
         }
         
         unsigned long remaining = (endTime - millis()) / 1000;
-        if (remaining != ((endTime - millis() - 1000) / 1000)) {
+        if (millis() - lastPrint >= 1000) {
             printLine(std::to_string(remaining) + " seconds remaining...");
+            lastPrint = millis();
         }
         
-        vTaskDelay(100 / portTICK_PERIOD_MS);  
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
     
     printLine("Timer finished!");
     for (int i = 0; i < 3; i++) {
         printLine("BEEP!");
-        vTaskDelay(200 / portTICK_PERIOD_MS);  
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
@@ -209,6 +210,8 @@ void stopwatchCommand() {
             }
             lastUpdate = current;
         }
+        
+        vTaskDelay(pdMS_TO_TICKS(10));  
     }
 }
 

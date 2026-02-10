@@ -9,9 +9,19 @@ Theme themes[] = {
     {ST77XX_BLACK, ST77XX_WHITE, "classic"},
     {ST77XX_BLUE, ST77XX_YELLOW, "blue"},
     {ST77XX_WHITE, ST77XX_BLACK, "light"},
-    {0x0014, ST77XX_ORANGE, "dark-orange"},
-    {0x2104, ST77XX_MAGENTA, "purple"},
-    {ST77XX_BLACK, ST77XX_RED, "red-night"}
+    {ST77XX_BLACK, ST77XX_ORANGE, "dark-orange"}, 
+    {0x2104, ST77XX_MAGENTA, "purple"},     
+    {ST77XX_BLACK, ST77XX_RED, "red-night"},
+    {ST77XX_BLACK, 0xFFE0, "sunshine"},    
+    {ST77XX_BLUE, 0x07FF, "skyline"},       
+    {0xFD20, ST77XX_BLACK, "orange-flame"}, 
+    {ST77XX_WHITE, 0xF81F, "cotton-candy"},
+    {0x8410, ST77XX_WHITE, "pastel-gray"},  
+    {0x03E0, ST77XX_WHITE, "lime-light"},   
+    {ST77XX_RED, 0xFFE0, "fireworks"},      
+    {0x001F, 0xF81F, "neon-night"},         
+    {0x7E0, 0xF81F, "tropical"},            
+    {0xFC00, 0x07FF, "sunset"},             
 };
 
 int currentTheme = 0;

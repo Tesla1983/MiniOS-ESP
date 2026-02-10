@@ -761,7 +761,7 @@ void runCommand(const std::string& cmd_in) {
         killProcess(pid);
     }
     else if (baseCmd == "echo") {
-        echoCommand(args.arg1 + (args.rest.length() > 0 ? " " + args.rest : ""));
+        echoCommand(args.arg1 + (args.arg2.length() > 0 ? " " + args.arg2 : "") + (args.rest.length() > 0 ? " " + args.rest : ""));
     }
     else if (baseCmd == "calc") {
         if (args.arg1.length() == 0) {
