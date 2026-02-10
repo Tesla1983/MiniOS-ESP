@@ -1,6 +1,12 @@
 # MiniOS-ESP Documentation
 
 [![membrowse](https://membrowse.com/badge.svg)](https://membrowse.com/public/VuqarAhadli/MiniOS-ESP)
+![PlatformIO](https://img.shields.io/badge/PlatformIO-supported-brightgreen?logo=platformio)
+![Arduino](https://img.shields.io/badge/Arduino-supported-success?logo=arduino)
+![C++](https://img.shields.io/badge/language-C%2B%2B-blue?logo=c%2B%2B)
+![FreeRTOS](https://img.shields.io/badge/FreeRTOS-yes-orange?logo=freertos)
+![Version](https://img.shields.io/github/v/release/VuqarAhadli/MiniOS-ESP)
+
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -23,13 +29,14 @@ MiniOS-ESP is a lightweight, Unix-like command-line operating system designed fo
 - **SPIFFS filesystem** for persistent storage
 - **WiFi connectivity** with network utilities
 - **NTP time synchronization** and alarm system
-- **Mathematical calculator** with advanced functions
+- **Mathematical calculator** with advanced functions and graphing
 - **Customizable themes** and screensavers
 - **Serial command interface** for interactive control
 - **Multi-process architecture** with scheduler
+- **Unix-like command aliases** for familiar shell experience
 
 ### Version
-Current Version: **MiniOS-ESP v2.0.1**
+Current Version: **MiniOS-ESP v2.0.4**
 
 ---
 
@@ -190,6 +197,8 @@ Provides SPIFFS-based persistent storage.
 - Max filename length: 31 characters
 - Max open files: 5 simultaneous
 
+**Important:** Systems upgrading from v1.x to v2.0.3+ must reformat SPIFFS due to partition layout changes. Use `SPIFFS.format()` or perform a full flash erase.
+
 #### 4. Network (`network.cpp`)
 
 Manages WiFi connectivity and HTTP operations.
@@ -198,14 +207,17 @@ Manages WiFi connectivity and HTTP operations.
 - `connectWiFi()` - Interactive WiFi connection
 - `scanWiFi()` - Scan for available networks
 - `curlURL()` - HTTP GET request with headers
-- `pingHost()` - ICMP echo request (3 packets)
+- `pingHost()` - ICMP echo request with statistics
 
 **Network Features:**
 - WPA/WPA2 security support
 - DHCP client
 - DNS resolution
-- HTTP/1.1 protocol
+- HTTP/1.1 protocol with redirect following
+- Automatic binary content detection
+- Response truncation for large payloads (1500 bytes)
 - 10-second request timeout
+- Verbose mode for detailed debugging
 
 #### 5. Time Utilities (`timeutils.cpp`)
 
@@ -226,7 +238,7 @@ Synchronizes time and manages alarms.
 
 #### 6. Calculator (`commands.cpp`)
 
-Advanced mathematical expression evaluator.
+Advanced mathematical expression evaluator with graphing capabilities.
 
 **Supported Operations:**
 - Arithmetic: `+`, `-`, `*`, `/`, `%`, `^`
@@ -242,6 +254,11 @@ Advanced mathematical expression evaluator.
 - Nested parentheses supported
 - Unary minus handling
 - Floating-point results
+
+**Graphing:**
+- Function plotting over range x,y ∈ [-10,10]
+- Color-coded visualization
+- Support for all mathematical functions
 
 #### 7. Theme System (`theme.cpp`)
 
@@ -272,6 +289,23 @@ struct Theme {
 
 ## Command Reference
 
+### Command Aliases
+
+MiniOS supports Unix-like command aliases for improved usability:
+
+| Alias | Command | Alias | Command |
+|-------|---------|-------|---------|
+| `rm` | `delete` | `dir` | `ls` |
+| `free` | `mem` | `restart` | `reboot` |
+| `neofetch`, `fastfetch` | `fetch` | `wifiscan` | `scanwifi` |
+| `ipconfig`, `ifconfig` | Network info | `dns`, `nslookup` | DNS lookup |
+| `date` | `time` | `ntpupdate` | `synctime` |
+| `cal` | `calendar` | `sw` | `stopwatch` |
+| `ss` | `screensaver` | `plot` | `graph` |
+| `top` | `ps` | `h` | `help` |
+
+**Note:** Commands are case-insensitive (e.g., `PING`, `ping`, `Ping` all work).
+
 ### System Commands
 
 #### `help`
@@ -300,6 +334,8 @@ Network Commands:
   scanwifi      - Scan networks
   curl <url>    - Fetch content
   ping <host>   - Ping host
+  dns <host>    - DNS lookup
+  ifconfig      - Network info
 ```
 
 #### `version`
@@ -307,11 +343,11 @@ Show MiniOS version and repository.
 
 **Output:**
 ```
-MiniOS MiniOS-ESP v2.0.0
+MiniOS MiniOS-ESP v2.0.4
 Repository: github.com/VuqarAhadli
 ```
 
-#### `fetch`
+#### `fetch` / `neofetch` / `fastfetch`
 Display comprehensive system information.
 
 **Information Shown:**
@@ -331,7 +367,9 @@ Display MiniOS ASCII art logo.
 #### `clear` / `cls`
 Clear display and reset cursor.
 
-#### `mem`
+**Note:** Display automatically clears when output reaches the bottom to prevent overflow.
+
+#### `mem` / `free`
 Show memory statistics.
 
 **Output Format:**
@@ -346,7 +384,7 @@ Display time since boot.
 
 **Format:** `Xh Ym Zs`
 
-#### `reboot`
+#### `reboot` / `restart`
 Restart ESP32 device.
 
 **Warning:** All unsaved data will be lost.
@@ -361,6 +399,15 @@ Command history:
 2: read test.txt
 3: calc 2 + 2
 ...
+```
+
+#### `username <name>`
+Set local shell identity (session-only, non-persistent).
+
+**Example:**
+```
+> username Alice
+Username set to: Alice
 ```
 
 ---
@@ -404,7 +451,7 @@ Hello World
 More text
 ```
 
-#### `delete <filename>`
+#### `delete <filename>` / `rm <filename>`
 Remove file from filesystem.
 
 **Example:**
@@ -413,7 +460,7 @@ Remove file from filesystem.
 File deleted.
 ```
 
-#### `ls`
+#### `ls` / `dir`
 List all files with sizes.
 
 **Output:**
@@ -470,7 +517,7 @@ Time synced!
 2025-01-15  14:30:45
 ```
 
-#### `scanwifi`
+#### `scanwifi` / `wifiscan`
 Scan for nearby WiFi networks.
 
 **Output:**
@@ -487,14 +534,17 @@ Scanning WiFi...
 - Signal strength (dBm)
 - Security status
 
-#### `curl <url>`
+#### `curl <url> [-v]`
 Fetch web content via HTTP GET.
 
 **Features:**
 - Displays HTTP status code
 - Shows response headers
-- Prints response body (truncated at 800 bytes)
+- Prints response body (truncated at 1500 bytes)
 - Measures request duration
+- Automatic redirect following
+- Binary content detection
+- Verbose mode with `-v` flag for detailed debugging
 
 **Example:**
 ```
@@ -511,27 +561,63 @@ Time: 342ms
 <html>...
 ```
 
+**Verbose Mode:**
+```
+> curl -v http://example.com
+[Detailed connection information]
+...
+```
+
 **Supported Protocols:** HTTP only 
 
 #### `ping <host>`
-Send ICMP echo requests. 
+Send ICMP echo requests with statistics.
 
 **Example:**
 ```
 > ping 8.8.8.8
 Pinging 8.8.8.8...
-Ping OK, avg: 23 ms
+Ping statistics:
+Min: 21 ms
+Avg: 23 ms
+Max: 27 ms
+Packet loss: 0%
 ```
 
 **Parameters:**
 - 3 ping attempts
-- Displays average round-trip time
+- Displays min/average/max round-trip time
+- Shows packet loss percentage
+- Improved timeout handling
+
+#### `dns <host>` / `nslookup <host>`
+Perform DNS lookup for hostname.
+
+**Example:**
+```
+> dns google.com
+Resolving: google.com
+IP: 142.250.185.46
+```
+
+#### `ifconfig` / `ipconfig`
+Display network interface information.
+
+**Output:**
+```
+Network Information:
+IP Address: 192.168.1.42
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.1.1
+DNS: 8.8.8.8
+Signal: -45 dBm
+```
 
 ---
 
 ### Time Commands
 
-#### `time`
+#### `time` / `date`
 Display current date and time.
 
 **Format:** `YYYY-MM-DD HH:MM:SS`
@@ -544,10 +630,9 @@ Display current date and time.
 
 **Requirement:** Time must be synchronized automatically via `wifi` (or manually via the deprecated `synctime` command if necessary).
 
-#### `synctime`
+#### `synctime` / `ntpupdate`
 > **Deprecated.** Time synchronization is handled automatically by the `wifi` command.  
 > This command remains available only for debugging or recovery.
-
 
 Synchronizes the system time with an NTP server.
 
@@ -706,45 +791,7 @@ Result: 1.000000
 | Exponential | exp, sqrt |
 | Rounding | abs, ceil, floor, round |
 
-#### `hex <number>`
-Convert decimal to hexadecimal.
-
-**Example:**
-```
-> hex 255
-Decimal: 255
-Hexadecimal: 0xFF
-```
-
-#### `bin <number>`
-Convert decimal to binary.
-
-**Example:**
-```
-> bin 42
-Decimal: 42
-Binary: 0b101010
-```
-
-#### `base64 encode <text>`
-Encode text to Base64.
-
-**Example:**
-```
-> base64 encode Hello World
-Encoded: SGVsbG8gV29ybGQ=
-```
-
-#### `base64 decode <text>`
-Decode Base64 text.
-
-**Example:**
-```
-> base64 decode SGVsbG8gV29ybGQ=
-Decoded: Hello World
-```
-
-#### `graph <expression> <colour>`
+#### `graph <expression> [colour]` / `plot <expression> [colour]`
 
 Graph a mathematical function of `x`.
 
@@ -794,6 +841,43 @@ Graph a mathematical function of `x`.
 
 **Exit:** Press `ENTER` to return.
 
+#### `hex <number>`
+Convert decimal to hexadecimal.
+
+**Example:**
+```
+> hex 255
+Decimal: 255
+Hexadecimal: 0xFF
+```
+
+#### `bin <number>`
+Convert decimal to binary.
+
+**Example:**
+```
+> bin 42
+Decimal: 42
+Binary: 0b101010
+```
+
+#### `base64 encode <text>`
+Encode text to Base64.
+
+**Example:**
+```
+> base64 encode Hello World
+Encoded: SGVsbG8gV29ybGQ=
+```
+
+#### `base64 decode <text>`
+Decode Base64 text.
+
+**Example:**
+```
+> base64 decode SGVsbG8gV29ybGQ=
+Decoded: Hello World
+```
 
 #### `echo <text>`
 Print text to display.
@@ -838,9 +922,10 @@ Theme set: classic
 Theme set: purple
 ```
 
-#### `screensaver <mode>`
+#### `screensaver <mode>` / `ss <mode>`
 Run animated screensaver.
 > **Experimental feature.** Screensaver modes may cause input latency.
+
 **Modes:**
 1. **Wave Patterns** - Sinusoidal cyan/blue waves
 2. **Rainbow** - Flowing rainbow gradient
@@ -861,14 +946,11 @@ Press ENTER to exit...
 - Press ENTER to exit
 - Runs at ~20 FPS
 
-#### `pug`
-Display pug image.
-
 ---
 
 ### OS Management Commands
 
-#### `ps` / `processes`
+#### `ps` / `processes` / `top`
 List running processes.
 
 **Output:**
@@ -995,8 +1077,7 @@ MiniOS-ESP/
 │   ├── theme.cpp          # Theme management
 │   ├── timeutils.cpp      # Time and alarm functions
 │   ├── kernel.cpp         # Process management
-│   ├── config.cpp         # Configuration 
-│   └── pug.cpp            # PROGMEM pug photo data
+│   └── config.cpp         # Configuration 
 │
 ├── include/               # Header files
 │   ├── commands.h
@@ -1006,7 +1087,6 @@ MiniOS-ESP/
 │   ├── theme.h
 │   ├── timeutils.h
 │   ├── kernel.h
-│   ├── pug.h
 │   └── config.h          # Configuration constants
 │
 ├── lib/                  # External libraries
@@ -1034,7 +1114,7 @@ const int DAYLIGHT_OFFSET = 0;
 #define MAX_Y    230  // Text area height
 
 // System
-const char* OS_VERSION = "MiniOS-ESP v2.0.0";
+const char* OS_VERSION = "MiniOS-ESP v2.0.4";
 #define HISTORY_SIZE 10  // Command history entries
 ```
 
@@ -1059,12 +1139,12 @@ board_build.partitions = min_spiffs.csv
 
 1. **Declare command function** in `commands.h`:
 ```cpp
-void myNewCommand(String arg);
+void myNewCommand(std::string arg);
 ```
 
 2. **Implement function** in `commands.cpp`:
 ```cpp
-void myNewCommand(String arg) {
+void myNewCommand(std::string arg) {
     printLine("Executing: " + arg);
     // Your command logic here
 }
@@ -1072,10 +1152,14 @@ void myNewCommand(String arg) {
 
 3. **Add parser** in `runCommand()`:
 ```cpp
-else if (cmd.startsWith("mynew ")) {
-    myNewCommand(cmd.substring(6));
+// Commands are case-insensitive
+std::string cmd_lower = cmd;
+std::transform(cmd_lower.begin(), cmd_lower.end(), cmd_lower.begin(), ::tolower);
+
+if (cmd_lower.find("mynew ") == 0) {
+    myNewCommand(cmd.substr(6));
 }
-else if (cmd == "mynew") {
+else if (cmd_lower == "mynew") {
     printLine("Usage: mynew <argument>");
 }
 ```
@@ -1084,6 +1168,15 @@ else if (cmd == "mynew") {
 ```cpp
 printLine("  mynew <arg>   - My new command");
 ```
+
+5. **Add aliases (optional)**:
+```cpp
+else if (cmd_lower == "mn") {  // alias for mynew
+    cmd_lower = "mynew";
+}
+```
+
+**Important:** As of v2.0.3, all command handlers must accept `std::string` inputs instead of `String`. Avoid dynamic allocation inside tight loops and use `.c_str()` only at hardware or serial output boundaries.
 
 ### Creating New Themes
 
@@ -1114,12 +1207,12 @@ uint32_t max = ESP.getMaxAllocHeap();
 - Use stack for temporary data
 - Free dynamically allocated memory
 - Monitor heap fragmentation
-- Use `String` sparingly (heap allocation)
-- Prefer fixed-size buffers
+- Use `std::string` instead of Arduino `String` (reduces fragmentation)
+- Prefer fixed-size buffers for critical paths
 
 **FreeRTOS Task Guidelines:**
 - Minimum stack size: 1024 bytes
-- Shell process: 8192 bytes (handles String operations)
+- Shell process: 16384 bytes (increased in v2.0.1 to prevent stack overflow)
 - Always call `vTaskDelay()` in loops
 - Use mutexes for shared resources
 
@@ -1127,7 +1220,7 @@ uint32_t max = ESP.getMaxAllocHeap();
 
 **Serial Debug Output:**
 ```cpp
-Serial.println("Debug: " + String(value));
+Serial.println("Debug: " + std::to_string(value));
 ```
 
 **Memory Tracking:**
@@ -1178,6 +1271,12 @@ Serial.printf("Stack remaining: %d bytes\n", stackHighWater);
 - Check for loose connections
 - Add decoupling capacitor
 
+#### Screen overflow / duplicated prompts
+
+**Fixed in v2.0.2:** Display now automatically clears when output reaches the bottom. If you experience issues:
+- Ensure you're running v2.0.2 or later
+- Check cursor positioning logic in your custom commands
+
 ### WiFi Problems
 
 #### Cannot connect
@@ -1202,6 +1301,10 @@ Serial.printf("Stack remaining: %d bytes\n", stackHighWater);
 - Increase signal strength
 - Verify power supply stability
 
+#### Visual rendering issues (v2.0.4)
+
+**Fixed in v2.0.4:** WiFi function visual rendering issue resolved. Update to latest version if experiencing display problems during WiFi connection.
+
 ### Time Sync Failures
 
 #### Time not syncing
@@ -1225,6 +1328,7 @@ Serial.printf("Stack remaining: %d bytes\n", stackHighWater);
 - Partition not formatted
 - Corrupted filesystem
 - Flash memory failure
+- Incompatible partition layout (when upgrading from v1.x)
 
 **Solutions:**
 1. Format SPIFFS:
@@ -1239,6 +1343,8 @@ pio run --target uploadfs
 
 3. Check partition scheme in `platformio.ini`
 
+4. **For v2.0.3+ upgrades:** Perform full flash erase if upgrading from v1.x
+
 #### File operations fail
 
 **Solutions:**
@@ -1246,6 +1352,8 @@ pio run --target uploadfs
 - Verify filename (no illegal characters)
 - Close files after operations
 - Limit to 5 open files simultaneously
+
+**v2.0.3 improvements:** File write and append operations now have more predictable behavior and improved error handling when target files do not exist.
 
 ### Memory Issues
 
@@ -1259,9 +1367,11 @@ pio run --target uploadfs
 **Solutions:**
 1. Check free heap: `ESP.getFreeHeap()`
 2. Increase task stack sizes in `main.cpp`
-3. Reduce string operations
-4. Use static buffers instead of `String`
+3. Use `std::string` instead of Arduino `String` (v2.0.3+)
+4. Use static buffers instead of dynamic allocation
 5. Free allocated memory promptly
+
+**v2.0.3 improvements:** Migration to `std::string` significantly reduces heap fragmentation during long uptime sessions.
 
 **Heap Monitoring:**
 ```cpp
@@ -1314,11 +1424,11 @@ if (ESP.getFreeHeap() < 10000) {
 1. Erase flash completely:
 ```bash
 esptool.py --port /dev/ttyUSB0 erase_flash
-````
+```
 
 2. Re-upload firmware
 3. Verify `platformio.ini` board settings
-4. Increase task stack sizes
+4. Increase task stack sizes (shell: 16384 bytes as of v2.0.1)
 
 ---
 
@@ -1330,13 +1440,14 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 
 * Typographical error
 * Command not supported
-* Incorrect command category
+* Case mismatch (fixed in v2.0.2)
 
 **Solutions:**
 
 * Check spelling carefully
 * Use `help` to list available commands
-* Note that commands are **case-sensitive**
+* **v2.0.2+:** Commands are now case-insensitive
+* Try command aliases (e.g., `rm` for `delete`, `dir` for `ls`)
 
 ---
 
@@ -1351,6 +1462,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 * Review command syntax in the **Command Reference**
 * Ensure proper spacing between arguments
 * Verify required and optional parameters
+* Check for proper argument parsing (improved in v2.0.2 and v2.0.4)
 
 ---
 
@@ -1369,6 +1481,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 * Reduce unnecessary text output
 * Use `tft.startWrite()` / `tft.endWrite()` for batching
 * Increase SPI speed (only if stable)
+* **v2.0.2+:** Automatic screen clearing reduces unnecessary redraws
 
 ---
 
@@ -1387,6 +1500,12 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 
 ---
 
+#### Graph rendering issues (v2.0.4)
+
+**Fixed in v2.0.4:** Division-by-zero error in grapher output that caused canvas interference has been resolved. Update to latest version if experiencing graphing issues.
+
+---
+
 ### Best Practices
 
 #### Code Style
@@ -1396,6 +1515,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 * Follow existing naming conventions
 * Keep functions under 50 lines
 * Use `const` for constants
+* **v2.0.3+:** Use `std::string` for all string operations
 
 #### Resource Management
 
@@ -1403,6 +1523,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 * Free dynamically allocated memory
 * Use RAII patterns where possible
 * Monitor heap usage in long-running tasks
+* Avoid excessive string concatenation in loops
 
 #### Error Handling
 
@@ -1410,6 +1531,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 * Provide clear user feedback
 * Log errors to serial output
 * Fail gracefully whenever possible
+* **v2.0.2+:** Improved error handling across network commands
 
 ---
 
@@ -1426,15 +1548,141 @@ Contributions are welcome. Please:
 1. Fork the repository
 2. Create a feature branch
 3. Test changes thoroughly
-4. Submit a pull request with a clear description
+4. Follow coding standards (especially `std::string` usage in v2.0.3+)
+5. Submit a pull request with a clear description
 
 ---
 
 ## Changelog
 
+### v2.0.4 
+
+**Core Improvements:**
+* Fixed multiple command parser bugs
+* Improved and restructured argument handling logic for better reliability
+
+**Network Stack:**
+* Resolved visual issue in the `wifi` function that caused incorrect rendering
+
+**Display & UI:**
+* Fixed division-by-zero error in the grapher output that caused interference with the canvas
+
+**Technical Changes:**
+* Removed the deprecated `pug` function
+  * Frees up internal space for future system upgrades
+  * Reduces unnecessary code overhead
+
+### v2.0.3
+
+**Major Architectural Changes:**
+
+**Migration to `std::string`:**
+* Replaced all usages of `arduino::String` with `std::string`
+* Significantly reduces heap fragmentation during long uptime sessions
+* Enables safer and more expressive string handling using standard C++ features
+* Improves compatibility with modern C++ tooling and static analysis
+
+**Shell & System Enhancements:**
+
+**New / Updated Commands:**
+* `username <name>` - Introduces local shell identity customization (session-only, non-persistent)
+
+**Filesystem Improvements:**
+* More predictable behavior during file write and append operations
+* Improved error handling when target files do not exist
+* Internal refactor to fully align filesystem logic with `std::string` migration
+
+**Important Compatibility Note:**
+* Systems upgrading from v1.x must reformat SPIFFS
+* Partition layout changes require either:
+  * `SPIFFS.format()`, or
+  * A full flash erase using PlatformIO or Arduino tooling
+
+**Developer-Facing Changes:**
+
+**Coding Standards (Enforced in v2.0.3):**
+* All command handlers must:
+  * Accept `std::string` inputs
+  * Avoid dynamic allocation inside tight loops
+  * Use `.c_str()` only at hardware or serial output boundaries
+
+### v2.0.2
+
+**Core Improvements:**
+
+**Command System Overhaul:**
+* Refactored command parser with structured argument handling
+* Commands are now case-insensitive (`PING`, `ping`, `Ping`, etc.)
+* Added extensive command alias support for Unix-like familiarity:
+  * `rm` → `delete`
+  * `dir` → `ls`
+  * `free` → `mem`
+  * `restart` → `reboot`
+  * `neofetch`, `fastfetch` → `fetch`
+  * `wifiscan` → `scanwifi`
+  * `ipconfig`, `ifconfig` → Network info
+  * `dns`, `nslookup` → DNS lookup
+  * `date` → `time`
+  * `ntpupdate` → `synctime`
+  * `cal` → `calendar`
+  * `sw` → `stopwatch`
+  * `ss` → `screensaver`
+  * `plot` → `graph`
+  * `top` → `ps`
+  * `h` → `help`
+
+**Network Stack Enhancements:**
+
+**`curl` Improvements:**
+* Added verbose mode via `-v` flag
+* Improved HTTP status handling (including `429` and `504`)
+* Automatic redirect following
+* Binary content detection
+* Response truncation for large payloads (1500 bytes)
+* More descriptive error reporting
+
+**WiFi Enhancements:**
+* Ability to scan WiFi networks without connecting
+* Added disconnect functionality
+* Connection status display with RSSI information
+
+**`ping` Utility:**
+* Added min/average/max round-trip time statistics
+* Improved timeout handling
+* Packet loss percentage reporting
+
+**New Network Commands:**
+* DNS lookup: `nslookup` / `dns`
+* Network info: `ifconfig` / `ipconfig`
+
+**Display & UI Improvements:**
+* Improved screen clearing logic
+  * Automatically clears when output reaches bottom of display
+  * Prevents duplicated shell prompts
+  * More reliable cursor positioning
+
+**Help System Enhancements:**
+* Reworked help documentation structure
+* Commands grouped by category
+* Aliases displayed inline
+* Clearer usage examples
+* Consistent formatting across all help outputs
+
+**Bug Fixes:**
+* Fixed Base64 command argument parsing
+* Fixed screen overflow handling
+* Fixed cursor positioning after screen clear
+* Fixed empty command execution handling
+* Corrected ESP32Ping library usage (ESP8266 version was previously used)
+
+**Technical Changes:**
+* Improved error handling across all commands
+* Streamlined internal code structure
+* Removed unnecessary inline comments for cleaner source layout
+
 ### v2.0.1
 
-* Added `graph` function
+* Added `graph` function for mathematical function plotting
 * Shell process size increased to 16 KB to prevent stack overflow
 * `wifi` command fixed
 * `fetch` command bug with color block display fixed and cursor handling corrected
@@ -1479,8 +1727,7 @@ Contributions are welcome. Please:
 
 ---
 
-**Author:** Vuqar Ahadli
-**Repository:** [https://github.com/VuqarAhadli/MiniOS-ESP](https://github.com/VuqarAhadli/MiniOS-ESP)
-**Documentation Version:** 2.0.1
-**Last Updated:** January 2026
-
+**Author:** Vuqar Ahadli  
+**Repository:** [https://github.com/VuqarAhadli/MiniOS-ESP](https://github.com/VuqarAhadli/MiniOS-ESP)  
+**Documentation Version:** 2.0.4  
+**Last Updated:** February 2026
