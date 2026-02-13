@@ -6,7 +6,7 @@ on:
       num_commits:
         description: 'Number of commits to process'
         required: true
-        default: '50'
+        default: '2'
         type: string
 
 jobs:
