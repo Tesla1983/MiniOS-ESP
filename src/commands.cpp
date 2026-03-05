@@ -5,6 +5,7 @@
 #include "theme.h"
 #include "config.h"
 // #include "pug.h"
+#include "ball.h"
 #include "timeutils.h"
 #include "kernel.h"
 #include "grapher.h"
@@ -911,6 +912,37 @@ void runCommand(const std::string& cmd_in) {
         } else {
             printLine("Unknown help topic: " + args.arg1);
             showHelp();
+        }
+    }
+    else if (baseCmd == "ball") {
+    bool trail = false;
+
+    if (args.arg1.length() == 0) {
+        initialiseBall(10, trail);
+    }
+    else {
+        try {
+            int radius = std::stoi(args.arg1);
+
+            if (args.arg2.length() != 0) {
+                if (args.arg2 == "trail") {
+                    trail = true;
+                }
+            }
+
+            if (radius <= 0) {
+                printLine("Error: ball radius must be a positive integer.");
+            }
+            else if (radius > 115) {
+                printLine("Error: ball radius must be smaller than 116 pixels.");
+            }
+            else {
+                initialiseBall(radius, trail);
+            }
+        }
+        catch (const std::invalid_argument&) {
+            printLine("Error: invalid radius, must be a number.");
+        }
         }
     }
     else {
