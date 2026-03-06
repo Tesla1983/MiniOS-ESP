@@ -14,7 +14,6 @@ extern Theme themes[];
 extern int currentTheme;
 extern int themeCount;
 
-void initThemes();
 void listThemes();
 void setTheme(const std::string& themeName);
 Theme getCurrentTheme();

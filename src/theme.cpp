@@ -4,9 +4,9 @@
 #include <string>
 
 Theme themes[] = {
+    {ST77XX_BLACK, ST77XX_WHITE, "classic"},
     {ST77XX_BLACK, ST77XX_GREEN, "matrix"},
     {ST77XX_BLACK, ST77XX_CYAN, "cyan"},
-    {ST77XX_BLACK, ST77XX_WHITE, "classic"},
     {ST77XX_BLUE, ST77XX_YELLOW, "blue"},
     {ST77XX_WHITE, ST77XX_BLACK, "light"},
     {ST77XX_BLACK, ST77XX_ORANGE, "dark-orange"}, 
