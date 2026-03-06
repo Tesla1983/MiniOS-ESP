@@ -1,4 +1,5 @@
 #include "config.h"
+#include "display.h"
 #include <Arduino.h>
 
 
@@ -16,5 +17,9 @@ std::string getDeviceName() {
 void setDeviceName(const std::string& name) {
     if (!name.empty() && name.length() <= 32) {
         deviceName = name;
+    }
+    else if (name.length() >32){
+        printLine("Error: Username too long.");
+        return;
     }
 }

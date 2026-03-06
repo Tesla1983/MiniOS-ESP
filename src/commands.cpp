@@ -4,7 +4,7 @@
 #include "network.h"
 #include "theme.h"
 #include "config.h"
-// #include "pug.h"
+#include "pug.h"
 #include "ball.h"
 #include "timeutils.h"
 #include "kernel.h"
@@ -516,7 +516,8 @@ void showWiFiInfo() {
 
 void fetch() {
     showLogo();
-    printLine("");
+    // printLine("");
+    printLine("User: " + getDeviceName());
     showUptime();
     showMem();
     showChipInfo();
@@ -524,7 +525,6 @@ void fetch() {
     showCPUInfo();
     showWiFiInfo();
     
-    printLine("");
     
     int startX = 5;
     int startY = tft.getCursorY() + 5; 

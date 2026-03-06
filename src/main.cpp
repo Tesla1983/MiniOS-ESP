@@ -16,7 +16,7 @@ bool inputLocked = false;
 
 void initProcess(void *parameter) {
     printLine("MiniOS - FreeRTOS Kernel");
-    initThemes();
+
     printLine("[SYSTEM] Display initialized");
     
     if (!initFilesystem()) {

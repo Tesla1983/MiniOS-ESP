@@ -27,7 +27,7 @@ Theme themes[] = {
 int currentTheme = 0;
 int themeCount = sizeof(themes) / sizeof(Theme);
 
-void initThemes() {}
+
 
 void listThemes() {
     printLine("Available themes:");
