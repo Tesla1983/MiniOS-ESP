@@ -236,7 +236,7 @@ void showHelpDisplay() {
     printLine("  themes          - List themes");
     printLine("  theme <n>       - Select theme");
     printLine("  screensaver <n> - Run screensaver");
-    // printLine("  pug             - Show pug image");
+    printLine("  pug             - Show pug image");
 }
 
 
@@ -858,9 +858,9 @@ void runCommand(const std::string& cmd_in) {
         }
         setTheme(args.arg1);
     }
-    // else if (baseCmd == "pug") {
-    //     displayPug();
-    // }
+    else if (baseCmd == "pug") {
+        displayPug();
+    }
     else if (baseCmd == "screensaver" || baseCmd == "ss") {
         if (args.arg1.length() == 0) {
             printLine("Usage: screensaver <mode>");
