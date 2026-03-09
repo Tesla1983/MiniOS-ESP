@@ -2,8 +2,11 @@
 #include "ball.h"
 #include <cstdlib>
 #include <time.h>
+
 void initialiseBall(int ballRadius, bool trail) {
+
     std::srand(time(nullptr));
+
     tft.fillScreen(ST77XX_BLACK);
     screenLocked = true;
     tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
@@ -11,11 +14,13 @@ void initialiseBall(int ballRadius, bool trail) {
     tft.setCursor(5, 230);
     tft.print("Press ENTER to exit...");
     Serial.println("Press ENTER to exit...");
+
     int x = 160;
     int y = 115;
     int speedX = 2;  
     int speedY = 2;  
     uint64_t colour = 65535;
+    
     while (true) {
         if (Serial.available()) {
             char c = Serial.read();
