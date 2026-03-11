@@ -8,6 +8,6 @@
 #define X_MAX 320
 
 extern bool screenLocked;
-void initialiseBall(int ballRadius, bool trail);
+void initialiseBall(int ballRadius, bool trail, int numBalls);
 
 #endif

@@ -769,7 +769,7 @@ void runCommand(const std::string& cmd_in) {
             printLine("Usage: calc <expression>");
             return;
         }
-        calc(args.arg1);
+        calc(args.arg1 + args.arg2 + args.rest);
     }
     else if (baseCmd == "hex") {
         if (args.arg1.length() == 0) {
@@ -915,34 +915,49 @@ void runCommand(const std::string& cmd_in) {
         }
     }
     else if (baseCmd == "ball") {
-    bool trail = false;
+        bool trail = false;
+        int numBalls = 1;
 
-    if (args.arg1.length() == 0) {
-        initialiseBall(10, trail);
-    }
-    else {
-        try {
-            int radius = std::stoi(args.arg1);
+        if (args.arg1.length() == 0) {
+            initialiseBall(10, trail, numBalls);
+        }
+        else {
+            try {
+                int radius = std::stoi(args.arg1);
 
-            if (args.arg2.length() != 0) {
-                if (args.arg2 == "trail") {
-                    trail = true;
+               
+
+                if (args.arg2.length() != 0) {
+                    try {
+                        numBalls = std::stoi(args.arg2);
+                        if (numBalls < 1) {
+                            printLine("Error: number of balls must be at least 1.");
+                            return;
+                        }
+                    }
+                    catch (const std::invalid_argument&) {
+                        printLine("Error: number of balls must be a positive integer.");
+                        return;
+                    }
+                }
+                if (args.rest.length() != 0) {
+                    if (args.rest == "trail") {
+                        trail = true;
+                    }
+                }
+                if (radius <= 0) {
+                    printLine("Error: ball radius must be a positive integer.");
+                }
+                else if (radius > 115) {
+                    printLine("Error: ball radius must be smaller than 116 pixels.");
+                }
+                else {
+                    initialiseBall(radius, trail, numBalls);
                 }
             }
-
-            if (radius <= 0) {
-                printLine("Error: ball radius must be a positive integer.");
+            catch (const std::invalid_argument&) {
+                printLine("Error: invalid radius, must be a number.");
             }
-            else if (radius > 115) {
-                printLine("Error: ball radius must be smaller than 116 pixels.");
-            }
-            else {
-                initialiseBall(radius, trail);
-            }
-        }
-        catch (const std::invalid_argument&) {
-            printLine("Error: invalid radius, must be a number.");
-        }
         }
     }
     else {
