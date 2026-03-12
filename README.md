@@ -1537,7 +1537,7 @@ esptool.py --port /dev/ttyUSB0 erase_flash
 
 ### License
 
-MIT License — see repository for full text.
+BSD 3 Clause — see repository for full text.
 
 ---
 
