@@ -9,6 +9,7 @@
 #include "timeutils.h"
 #include "kernel.h"
 #include "grapher.h"
+#include "mirror.h"
 #include <esp_system.h>
 #include <WiFi.h>
 #include <math.h>
@@ -959,6 +960,9 @@ void runCommand(const std::string& cmd_in) {
                 printLine("Error: invalid radius, must be a number.");
             }
         }
+    }
+    else if (baseCmd == "mirror") {
+        startMirror();
     }
     else {
         printLine("Unknown command: " + baseCmd);
