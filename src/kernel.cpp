@@ -4,19 +4,32 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
-
+#include <vector>
+#include <string>
 static Process processTable[MAX_PROCESSES];
 static int processCount = 0;
 static int nextPID = 1;
 static uint32_t bootTime = 0;
 static SemaphoreHandle_t kernelMutex = NULL;
 
+std::vector<std::string> kernelMessages;
+
+const size_t MAX_LOG = 100;
+
+void logKernelMessage(const std::string& msg) {
+    if (kernelMessages.size() >= MAX_LOG) {
+        kernelMessages.erase(kernelMessages.begin()); 
+    }
+    kernelMessages.push_back(msg);
+}
+
 void kernelInit() {
     bootTime = millis();
     kernelMutex = xSemaphoreCreateMutex();
     
     if (!kernelMutex) {
-        Serial.println("ERROR: Failed to create kernel mutex");
+        Serial.println("[KERNEL] ERROR: Failed to create kernel mutex");
+        logKernelMessage("[KERNEL] ERROR: Failed to create kernel mutex");
         return;
     }
     
@@ -24,12 +37,14 @@ void kernelInit() {
     processCount = 0;
     
     Serial.println("[KERNEL] Kernel initialized");
+    logKernelMessage("[KERNEL] Kernel initialized");
 }
 
 int createProcess(TaskFunction_t function, const char* name, uint32_t stackSize, 
                   UBaseType_t priority) {
     if (processCount >= MAX_PROCESSES) {
         Serial.println("[KERNEL] ERROR: Process table full");
+        logKernelMessage("[KERNEL] ERROR: Process table full");
         return -1;
     }
     
@@ -48,6 +63,7 @@ int createProcess(TaskFunction_t function, const char* name, uint32_t stackSize,
     if (result != pdPASS) {
         xSemaphoreGive(kernelMutex);
         Serial.printf("[KERNEL] ERROR: Failed to create process '%s'\n", name);
+        logKernelMessage(std::string("[KERNEL] ERROR: Failed to create process ") + name);
         return -1;
     }
     
@@ -67,7 +83,11 @@ int createProcess(TaskFunction_t function, const char* name, uint32_t stackSize,
     
     Serial.printf("[KERNEL] Created process '%s' (PID: %d, Priority: %d)\n", 
                   name, pid, priority);
-    
+    logKernelMessage(
+    std::string("[KERNEL] Created process '") + name +
+    "' (PID: " + std::to_string(pid) +
+    ", Priority: " + std::to_string(priority) + ")"
+    );
     return pid;
 }
 
@@ -89,8 +109,9 @@ int killProcess(int pid) {
             vTaskDelete(handle);
             
             char msg[80];
-            sprintf(msg, "Killed process '%s' (PID: %d)", name, pid);
+            sprintf(msg, "[KERNEL] Killed process '%s' (PID: %d)", name, pid);
             printLine(msg);
+            logKernelMessage(msg);
             
             return 0;
         }
@@ -99,8 +120,9 @@ int killProcess(int pid) {
     xSemaphoreGive(kernelMutex);
     
     char msg[80];
-    sprintf(msg, "ERROR: Process PID %d not found", pid);
+    sprintf(msg, "[KERNEL] ERROR: Process PID %d not found", pid);
     printLine(msg);
+    logKernelMessage(msg);
     
     return -1;
 }
@@ -109,7 +131,8 @@ void listProcesses() {
     xSemaphoreTake(kernelMutex, portMAX_DELAY);
     
     if (processCount == 0) {
-        printLine("No processes running");
+        printLine("[KERNEL] No processes running");
+        logKernelMessage("[KERNEL] No processes running");
         xSemaphoreGive(kernelMutex);
         return;
     }
@@ -238,6 +261,7 @@ void signalProcess(int pid, int signal) {
     char msg[80];
     sprintf(msg, "Signal %d sent to PID %d", signal, pid);
     printLine(msg);
+    logKernelMessage(msg);
 }
 
 void waitForProcess(int pid) {

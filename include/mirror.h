@@ -1,11 +1,11 @@
-#ifndef MIRROR_H
-#define MIRROR_H
+// #ifndef MIRROR_H
+// #define MIRROR_H
 
-#include <Arduino.h>
-#include <Adafruit_ST7789.h>
+// #include <Arduino.h>
+// #include <Adafruit_ST7789.h>
 
-void startMirror();
+// void startMirror();
 
-extern bool screenLocked;
+// extern bool screenLocked;
 
-#endif
+// #endif

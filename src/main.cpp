@@ -16,17 +16,23 @@ bool inputLocked = false;
 
 void initProcess(void *parameter) {
     printLine("MiniOS - FreeRTOS Kernel");
-
-    printLine("[SYSTEM] Display initialized");
     
+    printLine("[SYSTEM] Display initialized");
+    logKernelMessage("[SYSTEM] Display initialized");
+
     if (!initFilesystem()) {
         printLine("[ERROR] Filesystem failed");
+        logKernelMessage("[ERROR] Filesystem failed");
         vTaskDelete(NULL);
         return;
     }
     
     printLine("[SYSTEM] Filesystem initialized");
-    printLine("MiniOS Ready");
+    logKernelMessage("[SYSTEM] Filesystem initialized");
+    loadConfig(); 
+    setTheme(std::to_string(getSavedTheme()));  
+    printLine("[SYSTEM] MiniOS Ready");
+    logKernelMessage("[SYSTEM] MiniOS Ready");
     printLine("Type 'help' for commands");
     printLine("");
     
@@ -39,6 +45,23 @@ void serialInputProcess(void *parameter) {
     
     while (1) {
         if (!screenLocked && !inputLocked && Serial.available()) {
+
+            if (Serial.peek() == '\x1b') {
+                Serial.read();
+                vTaskDelay(5 / portTICK_PERIOD_MS);  
+                if (Serial.available() >= 2) {
+                    char b = Serial.read();
+                    char c = Serial.read();
+                    if (b == '[') {
+                        if (c == 'A') { scrollUp(4); continue; }  
+                        if (c == 'B') { scrollDown(4); continue; }  
+                        if (c == 'F') { scrollToBottom(); continue; } 
+                        if (c == 'H') { scrollToTop(); continue; } 
+                    }
+                }
+                continue;
+            }
+
             char c = Serial.read();
             if (c == '\n') {
                 if (screenCleared) {

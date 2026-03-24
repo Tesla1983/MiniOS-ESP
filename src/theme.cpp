@@ -1,5 +1,7 @@
 #include "theme.h"
+#include "config.h"
 #include "display.h"
+#include "kernel.h"
 #include <Adafruit_ST7789.h>
 #include <string>
 
@@ -42,7 +44,9 @@ void setTheme(const std::string& tn) {
         if (tn == themes[i].name) {
             currentTheme = i;
             applyTheme();
-            printLine("Theme set: " + std::string(themes[currentTheme].name));
+            saveSavedTheme(currentTheme);
+            printLine("[SYSTEM] Theme set: " + std::string(themes[currentTheme].name));
+            logKernelMessage("[SYSTEM] Theme set: " + std::string(themes[currentTheme].name));
             return;
         }
     }
@@ -52,7 +56,9 @@ void setTheme(const std::string& tn) {
         if (themeNum >= 0 && themeNum < themeCount) {
             currentTheme = themeNum;
             applyTheme();
-            printLine("Theme set: " + std::string(themes[currentTheme].name));
+            saveSavedTheme(currentTheme);
+            printLine("[SYSTEM] Theme set: " + std::string(themes[currentTheme].name));
+            logKernelMessage("[SYSTEM] Theme set: " + std::string(themes[currentTheme].name));
             return;
         }
     } catch (...) {

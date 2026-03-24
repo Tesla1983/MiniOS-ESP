@@ -183,6 +183,7 @@ void showHelpFile() {
 void showHelpSystem() {
     printLine("System Commands:");
     printLine("  mem       - Memory info (alias: free)");
+    printLine("  dmesg     - System logs");
     printLine("  uptime    - System uptime");
     printLine("  reboot    - Restart device (alias: restart)");
     printLine("  fetch     - System info (alias: neofetch)");
@@ -671,9 +672,11 @@ void runCommand(const std::string& cmd_in) {
     else if (baseCmd == "wifi") {
         if (args.arg1 == "disconnect") {
             disconnectWiFi();
-        } else {
-            connectWiFi();
         }
+        else if (args.arg1 == "conf" || args.arg1 == "config"){
+            connectWiFi(true);
+        }
+        else connectWiFi(false);
     }
     else if (baseCmd == "disconnect") {
         disconnectWiFi();
@@ -721,6 +724,7 @@ void runCommand(const std::string& cmd_in) {
         showUptime();
     }
     else if (baseCmd == "reboot" || baseCmd == "restart") {
+        saveConfig();
         doReboot();
     }
     else if (baseCmd == "fetch" || baseCmd == "neofetch" || baseCmd == "fastfetch" ) {
@@ -961,9 +965,16 @@ void runCommand(const std::string& cmd_in) {
             }
         }
     }
-    else if (baseCmd == "mirror") {
-        startMirror();
+    // else if (baseCmd == "mirror") {
+    //     startMirror();
+    // }
+    else if (baseCmd == "dmesg" || baseCmd == "log")
+    {
+        for(const std::string& i : kernelMessages){
+            printLine(i);
+        }
     }
+    
     else {
         printLine("Unknown command: " + baseCmd);
         printLine("Type 'help' for available commands");

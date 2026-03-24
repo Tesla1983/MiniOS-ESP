@@ -1,6 +1,8 @@
 #include "network.h"
 #include "display.h"
 #include "timeutils.h"
+#include "config.h"
+#include "kernel.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ESP32Ping.h>
@@ -11,76 +13,86 @@ std::string WIFI_PASS = "";
 NetworkStatus networkStatus = NET_DISCONNECTED;
 extern bool inputLocked;
 
-void connectWiFi() {
-    inputLocked = true;
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    
-    if (WiFi.status() == WL_CONNECTED) {
-        printLine("Already connected!");
-        printLine("SSID: " + std::string(WiFi.SSID().c_str()));
-        printLine("IP: " + std::string(WiFi.localIP().toString().c_str()));
-        printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+void connectWiFi(bool useConfig) {
+
+    if (!useConfig){
+        inputLocked = true;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        
+        if (WiFi.status() == WL_CONNECTED) {
+            printLine("Already connected!");
+            printLine("SSID: " + std::string(WiFi.SSID().c_str()));
+            printLine("IP: " + std::string(WiFi.localIP().toString().c_str()));
+            printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+            inputLocked = false;
+            return;
+        }
+        
+        while (Serial.available() > 0) Serial.read();
+        
+        printLine("Enter SSID: ");
+        WIFI_SSID = "";
+        while (true) {
+            if (Serial.available()) {
+                char c = Serial.read();
+                if (c == '\n' || c == '\r') {
+                    if (WIFI_SSID.length() > 0) {
+                        Serial.println();
+                        break;
+                    }
+                } else if (c == '\b' || c == 127) {
+                    if (WIFI_SSID.length() > 0) {
+                        WIFI_SSID.pop_back();
+                        Serial.write('\b'); Serial.write(' '); Serial.write('\b');
+                    }
+                } else if (c >= 32 && c <= 126) {
+                    WIFI_SSID += c;
+                    Serial.write(c);
+                }
+            }
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+        }
+        WIFI_SSID.erase(0, WIFI_SSID.find_first_not_of(" \t\n\r\f\v"));
+        WIFI_SSID.erase(WIFI_SSID.find_last_not_of(" \t\n\r\f\v") + 1);
+        
+        while (Serial.available() > 0) Serial.read();
+        
+        printLine("Enter Password: ");
+        WIFI_PASS = "";
+        while (true) {
+            if (Serial.available()) {
+                char c = Serial.read();
+                if (c == '\n' || c == '\r') {
+                    if (WIFI_PASS.length() > 0) {
+                        Serial.println();
+                        break;
+                    }
+                } else if (c == '\b' || c == 127) {
+                    if (WIFI_PASS.length() > 0) {
+                        WIFI_PASS.pop_back();
+                        Serial.write('\b'); Serial.write(' '); Serial.write('\b');
+                    }
+                } else if (c >= 32 && c <= 126) {
+                    WIFI_PASS += c;
+                    Serial.write('*');
+                }
+            }
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+        }
+        WIFI_PASS.erase(0, WIFI_PASS.find_first_not_of(" \t\n\r\f\v"));
+        WIFI_PASS.erase(WIFI_PASS.find_last_not_of(" \t\n\r\f\v") + 1);
+        
         inputLocked = false;
-        return;
     }
-    
-    while (Serial.available() > 0) Serial.read();
-    
-    printLine("Enter SSID: ");
-    WIFI_SSID = "";
-    while (true) {
-        if (Serial.available()) {
-            char c = Serial.read();
-            if (c == '\n' || c == '\r') {
-                if (WIFI_SSID.length() > 0) {
-                    Serial.println();
-                    break;
-                }
-            } else if (c == '\b' || c == 127) {
-                if (WIFI_SSID.length() > 0) {
-                    WIFI_SSID.pop_back();
-                    Serial.write('\b'); Serial.write(' '); Serial.write('\b');
-                }
-            } else if (c >= 32 && c <= 126) {
-                WIFI_SSID += c;
-                Serial.write(c);
-            }
+    else{
+        if(WIFI_PASS.empty() || WIFI_SSID.empty()){
+            WIFI_SSID = getWifiSSID();
+            WIFI_PASS = getWifiPass();
         }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    WIFI_SSID.erase(0, WIFI_SSID.find_first_not_of(" \t\n\r\f\v"));
-    WIFI_SSID.erase(WIFI_SSID.find_last_not_of(" \t\n\r\f\v") + 1);
-    
-    while (Serial.available() > 0) Serial.read();
-    
-    printLine("Enter Password: ");
-    WIFI_PASS = "";
-    while (true) {
-        if (Serial.available()) {
-            char c = Serial.read();
-            if (c == '\n' || c == '\r') {
-                if (WIFI_PASS.length() > 0) {
-                    Serial.println();
-                    break;
-                }
-            } else if (c == '\b' || c == 127) {
-                if (WIFI_PASS.length() > 0) {
-                    WIFI_PASS.pop_back();
-                    Serial.write('\b'); Serial.write(' '); Serial.write('\b');
-                }
-            } else if (c >= 32 && c <= 126) {
-                WIFI_PASS += c;
-                Serial.write('*');
-            }
-        }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
-    WIFI_PASS.erase(0, WIFI_PASS.find_first_not_of(" \t\n\r\f\v"));
-    WIFI_PASS.erase(WIFI_PASS.find_last_not_of(" \t\n\r\f\v") + 1);
-    
-    inputLocked = false;
     
     printLine("Connecting to: " + WIFI_SSID);
+
     WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
     
     int attempts = 0;
@@ -94,25 +106,34 @@ void connectWiFi() {
     if (WiFi.status() == WL_CONNECTED) {
         printLine("");
         printLine("Connected!");
+        logKernelMessage("[NETWORK] Connected!");
         printLine("SSID: " + std::string(WiFi.SSID().c_str()));
+        logKernelMessage("[NETWORK] SSID: " + std::string(WiFi.SSID().c_str()));
         printLine("IP: " + std::string(WiFi.localIP().toString().c_str()));
+        logKernelMessage("[NETWORK] IP: " + std::string(WiFi.localIP().toString().c_str()));
         printLine("RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+        logKernelMessage("[NETWORK] RSSI: " + std::to_string(WiFi.RSSI()) + " dBm");
+
+        if(!useConfig) setWifiConfig(WIFI_SSID,WIFI_PASS);
         syncTime();
     } else {
         printLine("");
         printLine("Failed to connect.");
+        logKernelMessage("[NETWORK] Failed to connect.");
     }
 }
 
 void disconnectWiFi() {
     if (WiFi.status() != WL_CONNECTED) {
         printLine("Not connected to WiFi");
+        logKernelMessage("[NETWORK] Not connected to WiFi");
         return;
     }
     
     WiFi.disconnect();
     networkStatus = NET_DISCONNECTED;
     printLine("WiFi disconnected");
+    logKernelMessage("[NETWORK] WiFi disconnected");
 }
 
 void scanWiFi() {
@@ -122,6 +143,7 @@ void scanWiFi() {
     
     if (n == 0) {
         printLine("No networks found");
+        logKernelMessage("[NETWORK] No networks found");
     } else {
         printLine("Found " + std::to_string(n) + " networks:");
         printLine("");
@@ -160,6 +182,7 @@ void scanWiFi() {
 void showNetworkInfo() {
     if (WiFi.status() != WL_CONNECTED) {
         printLine("Not connected to WiFi");
+        logKernelMessage("[NETWORK] Not connected to WiFi");
         return;
     }
     
@@ -202,6 +225,8 @@ void curlURLVerbose(const std::string& url) {
 void curlWithOptions(CurlOptions opts) {
     if (!isConnected()) {
         printLine("curl: not connected to WiFi");
+        logKernelMessage("[NETWORK] curl: not connected to WiFi");
+
         printLine("Run 'wifi' first");
         return;
     }
@@ -305,11 +330,13 @@ void curlWithOptions(CurlOptions opts) {
                 printLine("(empty response)");
             }
         }
-    } else if (code >= 300 && code < 400) {
+    }
+    else if (code >= 300 && code < 400) {
         if (http.hasHeader("Location")) {
             printLine("Redirect to: " + std::string(http.header("Location").c_str()));
         }
-    } else if (code >= 400) {
+    }
+    else if (code >= 400) {
         
         printLine("Error " + std::to_string(code) + ": " + getStatusText(code));
         String payload_s = http.getString();
@@ -360,6 +387,7 @@ int httpPost(const std::string& url, const std::string& data) {
 void pingHost(const std::string& host) {
     if (!isConnected()) {
         printLine("ping: not connected to WiFi");
+        logKernelMessage("[NETWORK] ping: not connected to WiFi");
         return;
     }
     
@@ -420,6 +448,8 @@ void pingHost(const std::string& host) {
 void dnsLookup(const std::string& hostname) {
     if (!isConnected()) {
         printLine("dns: not connected to WiFi");
+        logKernelMessage("[NETWORK] dns: not connected to WiFi");
+
         return;
     }
     

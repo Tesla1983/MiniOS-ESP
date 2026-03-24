@@ -20,7 +20,7 @@ enum NetworkStatus {
 
 extern NetworkStatus networkStatus;
 
-void connectWiFi();
+void connectWiFi(bool useConfig);
 void disconnectWiFi();
 void scanWiFi();
 void showNetworkInfo();

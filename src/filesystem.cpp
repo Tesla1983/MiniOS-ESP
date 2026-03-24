@@ -1,12 +1,14 @@
 #include "filesystem.h"
 #include "display.h"
+#include "kernel.h"
 #include <FS.h>
 #include <SPIFFS.h>
 #include <string>
 
 bool initFilesystem() {
     if (!SPIFFS.begin(true)) {
-        printLine("SPIFFS Failed.");
+        printLine("[FS] SPIFFS Failed.");
+        logKernelMessage("[FS] SPIFFS Failed.");
         return false;
     }
     
@@ -27,7 +29,8 @@ void writeFile(const std::string& name_in, const std::string& data) {
     
     File f = SPIFFS.open(name.c_str(), FILE_WRITE);
     if (!f) {
-        printLine("Error opening file.");
+        printLine("[FS] Error opening file.");
+        logKernelMessage("[FS] Error opening file.");
         return;
     }
     
@@ -51,7 +54,8 @@ void appendFile(const std::string& name_in, const std::string& data) {
     
     File f = SPIFFS.open(name.c_str(), FILE_APPEND);
     if (!f) {
-        printLine("Error opening file.");
+        printLine("[FS] Error opening file.");
+        logKernelMessage("[FS] Error opening file.");
         return;
     }
     
@@ -75,7 +79,8 @@ void readFile(const std::string& name_in) {
     
     File f = SPIFFS.open(name.c_str());
     if (!f) {
-        printLine("Error reading file.");
+        printLine("[FS] Error reading file.");
+        logKernelMessage("[FS] Error reading file.");
         return;
     }
     
@@ -102,7 +107,8 @@ void deleteFile(const std::string& name_in) {
     if (SPIFFS.remove(name.c_str())) {
         printLine("File deleted.");
     } else {
-        printLine("Error deleting file.");
+        printLine("[FS] Error deleting file.");
+        logKernelMessage("[FS] Error deleting file.");
     }
 }
 
@@ -114,7 +120,8 @@ void listFiles() {
     
     File root = SPIFFS.open("/");
     if (!root) {
-        printLine("Failed to open root");
+        printLine("[FS] Failed to open root");
+        logKernelMessage("[FS] Failed to open root");
         return;
     }
     
@@ -181,14 +188,16 @@ bool copyFile(const std::string& src_in, const std::string& dst_in) {
     
     File in = SPIFFS.open(src.c_str());
     if (!in) {
-        printLine("Error reading src file.");
+        printLine("[FS] Error reading src file.");
+        logKernelMessage("[FS] Error reading src file.");
         return false;
     }
     
     File out = SPIFFS.open(dst.c_str(), FILE_WRITE);
     if (!out) {
         in.close();
-        printLine("Error opening dst file.");
+        printLine("[FS] Error opening dst file.");
+        logKernelMessage("[FS] Error opening dst file.");
         return false;
     }
     

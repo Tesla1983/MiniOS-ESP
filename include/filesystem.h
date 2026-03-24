@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <string>
+#include "kernel.h"
 
 bool initFilesystem();
 void writeFile(const std::string& name, const std::string& data);

@@ -3,6 +3,7 @@
 #include "filesystem.h"
 #include "network.h"
 #include "theme.h"
+#include "kernel.h"
 #include "config.h"
 #include "pug.h"
 #include "timeutils.h"

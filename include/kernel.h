@@ -4,7 +4,8 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
+#include <vector>
+#include <string>
 
 enum ProcessState {
     PROC_RUNNING,     
@@ -32,7 +33,8 @@ struct Process {
 void kernelInit();
 void kernelScheduler(void *parameter);
 void kernelShutdown();
-
+extern std::vector<std::string> kernelMessages;
+void logKernelMessage(const std::string& msg);
 
 int createProcess(TaskFunction_t function, const char* name, uint32_t stackSize, 
                   UBaseType_t priority);
