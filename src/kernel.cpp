@@ -85,8 +85,8 @@ int createProcess(TaskFunction_t function, const char* name, uint32_t stackSize,
                   name, pid, priority);
     logKernelMessage(
     std::string("[KERNEL] Created process '") + name +
-    "' (PID: " + std::to_string(pid) +
-    ", Priority: " + std::to_string(priority) + ")"
+    "'(PID:" + std::to_string(pid) +
+    ",Priority:" + std::to_string(priority) + ")"
     );
     return pid;
 }

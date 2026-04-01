@@ -83,7 +83,7 @@ void initialiseBall(int ballRadius, bool trail, int numBalls) {
         b.y      = 115;
         b.speedX = speed * cosf(angle);
         b.speedY = speed * sinf(angle);
-        b.colour = std::rand() % 65536;
+        // b.colour = std::rand() % 65536;
         balls.push_back(b);
     }
 

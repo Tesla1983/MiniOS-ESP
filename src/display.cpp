@@ -14,9 +14,11 @@ bool screenCleared = false;
 #define LINES_ON_SCREEN (MAX_Y / LINE_HEIGHT) 
 
 static std::string lineBuffer[SCROLL_BUFFER_SIZE];
-static int bufferHead   = 0;   
-static int bufferCount  = 0;   
+static int bufferHead = 0;   
+static int bufferCount = 0;   
 static int scrollOffset = 0;   
+
+
 
 void renderScreen(){
     Theme current = getCurrentTheme();
@@ -90,8 +92,12 @@ void initDisplay() {
     tft.setRotation(1);
     tft.setTextWrap(true);
     tft.invertDisplay(false);
+    for(int i=0; i<SCROLL_BUFFER_SIZE; ++i){
+    lineBuffer[i] = "\n";
+    }
     applyTheme();
     currentCursorY = 0;
+
 }
 
 void applyTheme() {

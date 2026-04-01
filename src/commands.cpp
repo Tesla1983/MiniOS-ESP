@@ -10,6 +10,7 @@
 #include "kernel.h"
 #include "grapher.h"
 #include "mirror.h"
+#include "pingpong.h"
 #include <esp_system.h>
 #include <WiFi.h>
 #include <math.h>
@@ -973,6 +974,10 @@ void runCommand(const std::string& cmd_in) {
         for(const std::string& i : kernelMessages){
             printLine(i);
         }
+    }
+    else if (baseCmd == "pong" || baseCmd == "pingpong")
+    {
+        pingpongGame();
     }
     
     else {
