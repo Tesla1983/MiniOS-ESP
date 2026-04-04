@@ -1,24 +1,26 @@
 name: Membrowse Memory Report
-
 on:
   pull_request:
   push:
     branches:
       - master
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4      
         with:
           fetch-depth: 0
+          # Fetch the base branch so diff tools can see history before the PR
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Fetch base branch for PRs
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
