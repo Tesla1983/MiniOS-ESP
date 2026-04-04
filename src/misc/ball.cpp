@@ -83,7 +83,7 @@ void initialiseBall(int ballRadius, bool trail, int numBalls) {
         b.y      = 115;
         b.speedX = speed * cosf(angle);
         b.speedY = speed * sinf(angle);
-        // b.colour = std::rand() % 65536;
+        b.colour = std::rand() % 65536;
         balls.push_back(b);
     }
 
@@ -108,21 +108,21 @@ void initialiseBall(int ballRadius, bool trail, int numBalls) {
             if (b.x - ballRadius <= 0) {
                 b.speedX = std::abs(b.speedX) * WALL_DAMP;
                 b.x = ballRadius;
-                b.colour = std::rand() % 65536;
+                // b.colour = std::rand() % 65536;
             } else if (b.x + ballRadius >= X_MAX) {
                 b.speedX = -std::abs(b.speedX) * WALL_DAMP;
                 b.x = X_MAX - ballRadius;
-                b.colour = std::rand() % 65536;
+                // b.colour = std::rand() % 65536;
             }
             
             if (b.y - ballRadius <= 0) {
                 b.speedY = std::abs(b.speedY) * WALL_DAMP;
                 b.y = ballRadius;
-                b.colour = std::rand() % 65536;
+                // b.colour = std::rand() % 65536;
             } else if (b.y + ballRadius >= Y_MAX) {
                 b.speedY = -std::abs(b.speedY) * FLOOR_DAMP;
                 b.y = Y_MAX - ballRadius;
-                b.colour = std::rand() % 65536;
+                // b.colour = std::rand() % 65536;
             }
             
             tft.fillCircle((int)b.x, (int)b.y, ballRadius, b.colour);

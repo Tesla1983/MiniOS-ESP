@@ -42,55 +42,70 @@ void initProcess(void *parameter) {
 
 void serialInputProcess(void *parameter) {
     const TickType_t delay = 10 / portTICK_PERIOD_MS;
-    
+    bool promptPrinted = false;
+
     while (1) {
         if (!screenLocked && !inputLocked && Serial.available()) {
 
             if (Serial.peek() == '\x1b') {
                 Serial.read();
-                vTaskDelay(5 / portTICK_PERIOD_MS);  
+                vTaskDelay(5 / portTICK_PERIOD_MS);
                 if (Serial.available() >= 2) {
                     char b = Serial.read();
                     char c = Serial.read();
                     if (b == '[') {
-                        if (c == 'A') { scrollUp(4); continue; }  
-                        if (c == 'B') { scrollDown(4); continue; }  
-                        if (c == 'F') { scrollToBottom(); continue; } 
-                        if (c == 'H') { scrollToTop(); continue; } 
+                        if (c == 'A') { scrollUp(4);      continue; }
+                        if (c == 'B') { scrollDown(4);    continue; }
+                        if (c == 'F') { scrollToBottom(); continue; }
+                        if (c == 'H') { scrollToTop();    continue; }
                     }
                 }
                 continue;
             }
 
+            if (!promptPrinted) {
+                tft.setCursor(5,currentCursorY);
+                print(">" + getDeviceName() + "@Mini:");
+                promptPrinted = true;
+            }
+
             char c = Serial.read();
+
             if (c == '\n') {
                 if (screenCleared) {
-                    if (input.length() > 0) {
-                        print(input);
-                    }
-                    printLine("");
+                    // if (input.length() > 0) {
+                    //     print(input);
+                    // }
+                    // printLine("");
                     currentCursorY = tft.getCursorY();
                     screenCleared = false;
-                } else {
-                    printLine(">" + getDeviceName() + "@Mini:" + input);
                 }
                 if (input.length() > 0) {
+                    printLine("");
                     runCommand(input);
+
                 }
                 input = "";
-                
+                promptPrinted = false; 
+
             } else if (c == '\b' || c == 127) {
                 if (input.length() > 0) {
                     input.pop_back();
                     Serial.write('\b');
                     Serial.write(' ');
                     Serial.write('\b');
+                    currentCursorX -= 6;
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.print(" ");
+                    tft.setCursor(currentCursorX, currentCursorY);
                 }
+
             } else {
                 input += c;
-                Serial.write(c);
+                print(c);
             }
         }
+
         vTaskDelay(delay);
     }
 }

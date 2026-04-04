@@ -8,6 +8,7 @@ extern Adafruit_ST7789 tft;
 extern bool screenLocked;
 extern bool screenCleared;
 extern int16_t currentCursorY;
+extern int16_t currentCursorX;
 
 #define MAX_Y 240
 
@@ -18,6 +19,7 @@ void newPage();
 void renderScreen();
 void printLine(const std::string& s);
 void print(const std::string& s);
+void print(const char& s);
 
 void scrollUp(int lines = 3);
 void scrollDown(int lines = 3);

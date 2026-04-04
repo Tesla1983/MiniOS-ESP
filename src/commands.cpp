@@ -164,10 +164,11 @@ void showHelp() {
     printLine("  help file     - File commands");
     printLine("  help system   - System commands");
     printLine("  help network  - Network commands");
-    printLine("  help utils    - Utility commands");
     printLine("  help time     - Time commands");
     printLine("  help display  - Display commands");
     printLine("  help os       - OS management");
+    printLine("  help utils    - Utility commands");
+    printLine("  help misc     - Miscellaneous commands");
 }
 
 void showHelpFile() {
@@ -239,8 +240,14 @@ void showHelpDisplay() {
     printLine("  themes          - List themes");
     printLine("  theme <n>       - Select theme");
     printLine("  screensaver <n> - Run screensaver");
-    printLine("  pug             - Show pug image");
 }
+
+void showHelpMiscellaneous() {
+    printLine("Miscellaneous Commands:");
+    printLine("  ball <w> <n> <t> - Simulate balls");
+    printLine("  pug              - Show pug image");
+}
+
 
 
 int precedence(char op) {
@@ -870,12 +877,12 @@ void runCommand(const std::string& cmd_in) {
     else if (baseCmd == "screensaver" || baseCmd == "ss") {
         if (args.arg1.length() == 0) {
             printLine("Usage: screensaver <mode>");
-            printLine("Available modes: 1-7");
+            printLine("Available modes: 1-8");
             return;
         }
         
         int mode = std::stoi(args.arg1);
-        if (mode < 1 || mode > 7) {
+        if (mode < 1 || mode > 8) {
             printLine("Invalid mode. Use 1-7.");
             return;
         }
@@ -915,6 +922,8 @@ void runCommand(const std::string& cmd_in) {
             showHelpDisplay();
         } else if (args.arg1 == "os") {
             showHelpOS();
+        } else if (args.arg1 == "misc") {
+            showHelpMiscellaneous();
         } else {
             printLine("Unknown help topic: " + args.arg1);
             showHelp();

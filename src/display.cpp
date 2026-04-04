@@ -6,6 +6,7 @@
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 int16_t currentCursorY = 0;
+int16_t currentCursorX = 5;
 bool screenCleared = false;
 
 #define SCROLL_BUFFER_SIZE 100
@@ -116,7 +117,7 @@ void clearScreen() {
     scrollOffset = 0;
     tft.setTextColor(current.fg, current.bg);
     screenCleared = true;
-    print(">" + getDeviceName() + "@Mini:");
+    // print(">" + getDeviceName() + "@Mini:");
 }
 
 void newPage() {
@@ -149,6 +150,7 @@ void printLine(const std::string& s) {
         tft.setTextColor(current.fg, current.bg);
         tft.println(s.c_str());
         currentCursorY = tft.getCursorY();
+        currentCursorX = tft.getCursorX();
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
@@ -164,6 +166,20 @@ void print(const std::string& s) {
     tft.setTextColor(current.fg, current.bg);
     tft.print(s.c_str());
     currentCursorY = tft.getCursorY();
+    currentCursorX = tft.getCursorX();
+}
+
+void print(const char& s) {
+    Serial.print(s);
+
+    Theme current = getCurrentTheme();
+    if (currentCursorY > MAX_Y) {
+        newPage();
+    }
+    tft.setTextColor(current.fg, current.bg);
+    tft.print(s);
+    currentCursorY = tft.getCursorY();
+    currentCursorX = tft.getCursorX();
 }
 
 void screensaver(int mode) {
@@ -245,6 +261,19 @@ void screensaver(int mode) {
                     int bar = ((x * offset) % 128);
                     int brightness = (bar < 64) ? bar * 6 : (256 - bar) * 6;
                     color = tft.color565(brightness, brightness >> 1, 0);
+                } break;
+
+                case 8: {
+                    int cellSize = 10;
+                    int cx = (x * offset) / cellSize;
+                    int cy = (y + offset)/ cellSize;
+                    if ((cx + cy) % 2 == 0) {
+                        int brightness = ((x + offset) % cellSize) * 12;
+                        color = tft.color565(brightness, brightness, 255);
+                    } else if ((cx + cy) % 3 == 0) {
+                        int brightness = ((x + offset) % cellSize) * 12;
+                        color = tft.color565(brightness+20, brightness+20, 196);
+                    }
                 } break;
 
                 default:
