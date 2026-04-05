@@ -29,8 +29,8 @@ void connectWiFi(bool useConfig) {
         }
         
         while (Serial.available() > 0) Serial.read();
-        
-        printLine("Enter SSID: ");
+        tft.setCursor(5,currentCursorY);
+        print("Enter SSID: ");
         WIFI_SSID = "";
         while (true) {
             if (Serial.available()) {
@@ -43,11 +43,18 @@ void connectWiFi(bool useConfig) {
                 } else if (c == '\b' || c == 127) {
                     if (WIFI_SSID.length() > 0) {
                         WIFI_SSID.pop_back();
-                        Serial.write('\b'); Serial.write(' '); Serial.write('\b');
+                        Serial.write('\b');
+                        Serial.write(' ');
+                        Serial.write('\b');
+                        currentCursorX -= 6;
+                        tft.setCursor(currentCursorX, currentCursorY);
+                        tft.print(" ");
+                        tft.setCursor(currentCursorX, currentCursorY);
+
                     }
                 } else if (c >= 32 && c <= 126) {
                     WIFI_SSID += c;
-                    Serial.write(c);
+                    print(c);
                 }
             }
             vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -56,8 +63,9 @@ void connectWiFi(bool useConfig) {
         WIFI_SSID.erase(WIFI_SSID.find_last_not_of(" \t\n\r\f\v") + 1);
         
         while (Serial.available() > 0) Serial.read();
-        
-        printLine("Enter Password: ");
+        printLine("");
+        tft.setCursor(5,currentCursorY);
+        print("Enter Password: ");
         WIFI_PASS = "";
         while (true) {
             if (Serial.available()) {
@@ -70,11 +78,18 @@ void connectWiFi(bool useConfig) {
                 } else if (c == '\b' || c == 127) {
                     if (WIFI_PASS.length() > 0) {
                         WIFI_PASS.pop_back();
-                        Serial.write('\b'); Serial.write(' '); Serial.write('\b');
+                        Serial.write('\b');
+                        Serial.write(' ');
+                        Serial.write('\b');
+                        currentCursorX -= 6;
+                        tft.setCursor(currentCursorX, currentCursorY);
+                        tft.print(" ");
+                        tft.setCursor(currentCursorX, currentCursorY);
+
                     }
                 } else if (c >= 32 && c <= 126) {
                     WIFI_PASS += c;
-                    Serial.write('*');
+                    print('*');
                 }
             }
             vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -90,14 +105,14 @@ void connectWiFi(bool useConfig) {
             WIFI_PASS = getWifiPass();
         }
     }
-    
+    printLine("");
     printLine("Connecting to: " + WIFI_SSID);
 
     WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
     
     int attempts = 0;
     tft.setCursor(5,currentCursorY);
-    while (WiFi.status() != WL_CONNECTED && attempts < 10) {
+    while (WiFi.status() != WL_CONNECTED && attempts < 12) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
         print(".");
         attempts++;

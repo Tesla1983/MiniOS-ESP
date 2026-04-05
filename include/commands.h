@@ -38,6 +38,6 @@ void processCommand(const std::string& args);
 void showSystemStats();
 void killProcessCmd(int pid);
 
-
+extern bool promptPrinted;
 
 #endif

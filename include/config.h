@@ -2,10 +2,30 @@
 #define CONFIG_H
 #include <string>
 
-// PINS
-#define TFT_CS   5
-#define TFT_DC   2
-#define TFT_RST  4
+
+
+#if defined(DEVICE_ESP32_STANDARD)
+    // ESP32 SPI pins pre-configured
+    #define TFT_CS   5
+    #define TFT_DC   2
+    #define TFT_RST  4
+    #define DEVICE_NAME "ESP32"
+
+#elif defined(DEVICE_ESP32_S3)
+    // ESP32 S3 SPI pins pre-configured
+    #define TFT_CS   10
+    #define TFT_DC   9
+    #define TFT_RST  8
+    #define DEVICE_NAME "ESP32-S3"
+
+#else
+    // Default fallback (ESP32 Standard)
+    #define TFT_CS   5
+    #define TFT_DC   2
+    #define TFT_RST  4
+    #define DEVICE_NAME "ESP32"
+#endif
+
 // #define MAX_Y    230
 
 // TIME

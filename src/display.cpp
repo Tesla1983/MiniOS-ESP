@@ -9,17 +9,12 @@ int16_t currentCursorY = 0;
 int16_t currentCursorX = 5;
 bool screenCleared = false;
 
-#define SCROLL_BUFFER_SIZE 100
-#define LINE_HEIGHT 8
-/*   30    */
-#define LINES_ON_SCREEN (MAX_Y / LINE_HEIGHT) 
-
-static std::string lineBuffer[SCROLL_BUFFER_SIZE];
-static int bufferHead = 0;   
-static int bufferCount = 0;   
-static int scrollOffset = 0;   
 
 
+int bufferHead = 0;
+int bufferCount = 0;
+int scrollOffset = 0;
+std::string lineBuffer[SCROLL_BUFFER_SIZE];
 
 void renderScreen(){
     Theme current = getCurrentTheme();
@@ -325,11 +320,11 @@ void screensaver(int mode) {
 }
 
 void showLogo() {
-    printLine(",--.   ,--.,--.,--.  ,--.,--.    ,-----.  ,---.  ");
-    printLine("|   `.'   ||  ||  ,'.|  ||  |   '  .-.  ''   .-' ");
-    printLine("|  |'.'|  ||  ||  |' '  ||  |   |  | |  |`.  `-. ");
-    printLine("|  |   |  ||  ||  | `   ||  |   '  '-'  '.-'    |");
-    printLine("`--'   `--'`--'`--'  `--'`--'    `-----' `-----' ");
+    printLine("    __  ________   ______  ____  _____");
+    printLine("   /  |/  /  _/ | / /  _/ / __ \\/ ___/");
+    printLine("  / /|_/ // //  |/ // /  / / / /\\__ \\ ");
+    printLine(" / /  / // // /|  // /  / /_/ /___/ / ");
+    printLine("/_/  /_/___/_/ |_/___/  \\____//____/  ");
     printLine("");
     printLine(OS_VERSION);
     printLine("Check: https://github.com/VuqarAhadli");

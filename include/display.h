@@ -10,7 +10,7 @@ extern bool screenCleared;
 extern int16_t currentCursorY;
 extern int16_t currentCursorX;
 
-#define MAX_Y 240
+#define MAX_Y 235
 
 void initDisplay();
 void applyTheme();
@@ -28,5 +28,17 @@ void scrollToTop();
 void screensaver(int mode);
 void showLogo();
 uint8_t sin8(int angle);
+
+#define SCROLL_BUFFER_SIZE 100
+#define LINE_HEIGHT 8
+/*   30    */
+#define LINES_ON_SCREEN (MAX_Y / LINE_HEIGHT) 
+
+extern std::string lineBuffer[SCROLL_BUFFER_SIZE];
+extern int bufferHead;
+extern int bufferCount;
+extern int scrollOffset;
+
+
 
 #endif
