@@ -10,9 +10,17 @@ static void fillBorders(){
     tft.fillRect(315,0,5,229,ST77XX_RED);
 }
 
-static int optimisedBorderRedraw =0;
+static int optimisedBorderRedraw = 0;
 
-void pingpongGame() {
+typedef enum {
+    PING_PONG_GAME_STATE_PLAYING,
+    PING_PONG_GAME_STATE_LOST,
+    PING_PONG_GAME_STATE_WAITING_RESTART
+} GameState;
+
+static void pingpongTask(void* pvParameters) {
+     vTaskDelay(70 / portTICK_PERIOD_MS);
+    int16_t score = 0;
     std::srand(time(nullptr));
 
     tft.fillScreen(ST77XX_BLACK);
@@ -26,73 +34,154 @@ void pingpongGame() {
     int x = X_MAX / 2;
     int y = Y_MAX / 2;
     int speedX = 1;
-    int speedY = 2;
+    int speedY = 1;
     int ballRadius = 5;
     uint16_t colour = 65535;
 
-    uint16_t racketX = 0;
-    uint16_t racketY = Y_MAX / 2;
+    int16_t racketX = 0;
+    int16_t racketY = Y_MAX / 2;
     tft.drawRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
+    fillBorders();
+
+    GameState state = PING_PONG_GAME_STATE_PLAYING;
+    tft.setCursor(180, 230);
+    tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
+    tft.print("Score:");
+    tft.print(score);
 
     while (true) {
         if (Serial.available()) {
             char c = Serial.read();
 
-            if (c == '\n') { 
+            if (c == '\n') {
                 clearScreen();
                 screenLocked = false;
+                screenJustUnlocked = true;
+                vTaskDelete(NULL);
+                vTaskDelay(30/portTICK_PERIOD_MS);
                 return;
             }
 
-            if (c == '\x1b' && Serial.available() >= 2) { 
-                char b = Serial.read(); 
-                char d = Serial.read(); 
+            if (state == PING_PONG_GAME_STATE_WAITING_RESTART && c == 'r') {
+                tft.setCursor(X_MAX / 2 - 60, Y_MAX / 2);
+                tft.setTextSize(1);
+                tft.setTextColor(ST77XX_BLACK);
+                tft.print("You Lost :(");
+                tft.setCursor(X_MAX / 2 - 60, Y_MAX / 2 + 30);
+                tft.setTextColor(ST77XX_BLACK);
+                tft.println("Press 'R' to restart.");
 
-                if (d == 'A') { 
+                score = 0;
+                racketY = Y_MAX / 2;
+                tft.drawRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
+                fillBorders();
+
+                tft.setCursor(180, 230);
+                tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
+                tft.print("Score:");
+                tft.print(score);
+
+                state = PING_PONG_GAME_STATE_PLAYING;
+            }
+
+            if (state == PING_PONG_GAME_STATE_PLAYING && c == '\x1b' && Serial.available() >= 2) {
+                char b = Serial.read();
+                char d = Serial.read();
+
+                if (d == 'A') {
                     tft.fillRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, ST77XX_BLACK);
-                    racketY = std::max(0, racketY - 12);
+                    racketY = std::max((int16_t)0, (int16_t)(racketY - 15));
                     tft.fillRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
                 } else if (d == 'B') {
                     tft.fillRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, ST77XX_BLACK);
-                    racketY = std::min(Y_MAX - RACKET_LENGTH, racketY + 12);
+                    racketY = std::min((int16_t)(Y_MAX - RACKET_LENGTH), (int16_t)(racketY + 15));
                     tft.fillRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
                 }
             }
         }
 
-        tft.fillCircle(x, y, ballRadius, ST77XX_BLACK);
+        if (state == PING_PONG_GAME_STATE_PLAYING) {
+              
 
-        x += speedX;
-        y += speedY;
+            tft.fillCircle(x, y, ballRadius, ST77XX_BLACK);
 
-        if (x - ballRadius <= racketX + RACKET_WIDTH &&
-            y >= racketY &&
-            y <= racketY + RACKET_LENGTH) {
-            x = racketX + RACKET_WIDTH + ballRadius;
-            speedX = -speedX;
-            speedY += (std::rand() % 3 - 1); 
-            speedY = std::max(-3, std::min(speedY, 3));
+            x += speedX;
+            y += speedY;
+
+            if (x > 0 &&
+                x - ballRadius <= racketX + RACKET_WIDTH &&
+                y >= racketY &&
+                y <= racketY + RACKET_LENGTH) {
+
+                x = racketX + RACKET_WIDTH + ballRadius;
+                speedX = -speedX;
+                speedY += (std::rand() % 3 - 1);
+                speedY = std::max(-2, std::min(speedY, 2));
+                score++;
+                tft.setCursor(180, 230);
+                tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
+                tft.print("Score:");
+                tft.print(score);
+
+            }
+
+            if (y - ballRadius <= 0 || y + ballRadius >= Y_MAX) {
+                speedY = -speedY;
+            }
+
+            if (x + ballRadius >= X_MAX) {
+                x = X_MAX - ballRadius;
+                speedX = -speedX;
+            }
+
+            if (x - ballRadius < 0) {
+                tft.fillCircle(x, y, ballRadius, ST77XX_BLACK);
+                tft.fillRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, ST77XX_BLACK);
+
+                x = X_MAX / 2;
+                y = Y_MAX / 2;
+                speedX = ((std::rand() % 2) == 1) ? 1 : -1;
+                speedY = ((std::rand() % 2) == 1) ? -2 : 2;
+
+                tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
+                tft.fillCircle(X_MAX/2, Y_MAX/2, ballRadius, ST77XX_BLACK);
+                tft.setCursor(X_MAX / 2 - 60, Y_MAX / 2);
+                tft.setTextSize(1);
+                tft.setTextColor(ST77XX_RED);
+                tft.println("You Lost :(");
+                tft.setCursor(X_MAX / 2 - 60, Y_MAX / 2 + 30);
+                tft.setTextColor(ST77XX_WHITE);
+                tft.println("Press 'R' to restart.");
+
+                optimisedBorderRedraw = 0;
+
+                state = PING_PONG_GAME_STATE_LOST;
+
+
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+                continue;
+            }
+
+            optimisedBorderRedraw = (optimisedBorderRedraw + 1) % 5;
+            if (optimisedBorderRedraw == 0) fillBorders();
+
+            tft.fillCircle(x, y, ballRadius, colour);
+
+        } else if (state == PING_PONG_GAME_STATE_LOST) {
+            state = PING_PONG_GAME_STATE_WAITING_RESTART;
         }
 
-        if (y - ballRadius <= 0 || y + ballRadius >= Y_MAX) {
-            speedY = -speedY;
-        }
-
-        if (x + ballRadius >= X_MAX) {
-            x = X_MAX - ballRadius; 
-            speedX = -speedX;
-        }
-
-        if (x - ballRadius < 0) {
-            x = X_MAX / 2;
-            y = Y_MAX / 2;
-            speedX = 1;
-            speedY = 2;
-        }
-        if(optimisedBorderRedraw%10 ==0)  fillBorders();
-        else optimisedBorderRedraw = (optimisedBorderRedraw+1) % 10;
-        tft.fillCircle(x, y, ballRadius, colour);
-
-        vTaskDelay(10 / portTICK_PERIOD_MS); 
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+}
+
+void pingpongGame() {
+    xTaskCreate(
+        pingpongTask,
+        "PingPongTask",
+        6144,           
+        NULL,
+        1,             
+        NULL
+    );
 }

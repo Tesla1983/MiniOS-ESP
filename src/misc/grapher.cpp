@@ -3,11 +3,12 @@
 #include "config.h"
 #include "grapher.h"
 #include "commands.h"
+#include "userspace/calc.h"
 #include <cmath>
 #include <string>
 
 #define E 2.71828182845904523536
-#define PI 3.14159265358979323846
+
 namespace Operation{
     /*
     The default applyOp() implementation in commands.cpp contains

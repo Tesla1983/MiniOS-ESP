@@ -6,6 +6,7 @@
 
 extern Adafruit_ST7789 tft;
 extern bool screenLocked;
+extern bool screenJustUnlocked;
 extern bool screenCleared;
 extern int16_t currentCursorY;
 extern int16_t currentCursorX;

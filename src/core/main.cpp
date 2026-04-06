@@ -12,6 +12,14 @@
 #include "kernel.h"
 
 std::string input = "";
+
+/*!
+    Set to true when a fullscreen OS task is exitted
+    via vTaskDelete(). This flag lets the shell detect
+    the unlock on its next tick and redraw the prompt in terminal.
+*/
+bool screenJustUnlocked = false;
+
 bool screenLocked = false;
 bool inputLocked = false;
 
@@ -58,6 +66,16 @@ void serialInputProcess(void *parameter) {
     promptPrinted = true;
 
     for (;;) {
+
+        if (screenJustUnlocked) {
+        screenJustUnlocked = false;
+        input = "";
+        inputPositions.clear();
+        overFlownLines = 0;
+        initY = currentCursorY;
+        tft.setCursor(5, currentCursorY);
+        print(">" + getDeviceName() + "@Mini:");
+        }
         if (!screenLocked && !inputLocked && Serial.available()) {
 
             if (Serial.peek() == '\x1b') {
