@@ -40,14 +40,14 @@ void showHelpSystem() {
 
 void showHelpNetwork() {
     printLine("Network Commands:");
-    printLine("  wifi              - Connect to WiFi");
-    printLine("  disconnect        - Disconnect WiFi");
-    printLine("  scanwifi          - Scan networks");
-    printLine("  ifconfig          - Network info");
-    printLine("  ping <host>       - Ping host");
-    printLine("  nslookup <host>   - DNS lookup");
-    printLine("  curl <url>        - Fetch URL");
-    printLine("  curl -v <url>     - Verbose mode");
+    printLine("  wifi                - Connect to WiFi");
+    printLine("  disconnect          - Disconnect WiFi");
+    printLine("  scanwifi            - Scan networks");
+    printLine("  ifconfig            - Network info");
+    printLine("  ping <host> <tries> - Ping host");
+    printLine("  nslookup <host>     - DNS lookup");
+    printLine("  curl <url>          - Fetch URL");
+    printLine("  curl -v <url>       - Verbose mode");
 }
 
 void showHelpUtils() {
@@ -89,4 +89,7 @@ void showHelpMiscellaneous() {
     printLine("Miscellaneous Commands:");
     printLine("  ball <w> <n> <t> - Simulate balls");
     printLine("  pug              - Show pug image");
+    printLine("  pong             - Ping-pong game");
+    printLine("  d20              - Simulate D20 die");
+    printLine("  coin             - Simulate coin flip");
 }

@@ -3,7 +3,7 @@
 #include "config.h"
 #include "grapher.h"
 #include "commands.h"
-#include "userspace/calc.h"
+#include "tools/calc.h"
 #include <cmath>
 #include <string>
 

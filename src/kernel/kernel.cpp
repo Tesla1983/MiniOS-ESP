@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "display.h"
+#include "kernel.h"
 #include "display.h"  
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>

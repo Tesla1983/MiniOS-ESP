@@ -6,14 +6,12 @@
 #include <WiFi.h>
 
 
-void pingHost(const std::string& host) {
+void pingHost(const std::string& host,int retries) {
     if (!isConnected()) {
         printLine("ping: not connected to WiFi");
         logKernelMessage("[NETWORK] ping: not connected to WiFi");
         return;
     }
-    
-    printLine("PING " + host);
     
     IPAddress ip;
     if (!WiFi.hostByName(host.c_str(), ip)) {
@@ -29,7 +27,7 @@ void pingHost(const std::string& host) {
     float minTime = 999999;
     float maxTime = 0;
     
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < retries; i++) {
         sent++;
         
         bool success = Ping.ping(ip, 1);
@@ -48,9 +46,8 @@ void pingHost(const std::string& host) {
             printLine(std::to_string(i + 1) + ": Request timeout");
         }
         
-        if (i < 3) {
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
     }
     
     printLine("");

@@ -3,6 +3,6 @@
 
 #include <string>
 
-void pingHost(const std::string& host);
+void pingHost(const std::string& host,int retries);
 
 #endif

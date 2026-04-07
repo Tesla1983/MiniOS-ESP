@@ -17,11 +17,12 @@
 #include "mirror.h"
 #include "pingpong.h"
 #include "d20.h"
-#include "userspace/calc.h"
-#include "userspace/fetch.h"
-#include "userspace/ping.h"
-#include "userspace/utils.h"
-#include "userspace/sysinfo.h"
+#include "coin.h"
+#include "tools/calc.h"
+#include "tools/fetch.h"
+#include "tools/ping.h"
+#include "tools/utils.h"
+#include "tools/sysinfo.h"
 #include <esp_system.h>
 #include <WiFi.h>
 #include <math.h>

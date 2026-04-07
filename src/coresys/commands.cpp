@@ -189,11 +189,22 @@ void runCommand(const std::string& cmd_in) {
         }
     }
     else if (baseCmd == "ping") {
-        if (args.arg1.length() == 0) {
-            printLine("Usage: ping <host>");
+        if (args.arg1.empty()) {
+            printLine("Usage: ping <host> <tries>");
             return;
         }
-        pingHost(args.arg1);
+
+        int defaultTries = 4;
+
+        if (!args.arg2.empty()) {
+            try {
+                defaultTries = std::stoi(args.arg2);
+            } catch (...) {
+                printLine("Invalid number for tries, using default (4)");
+            }
+        }
+
+        pingHost(args.arg1, defaultTries);
     }
     else if (baseCmd == "nslookup" || baseCmd == "dns") {
         if (args.arg1.length() == 0) {
@@ -469,6 +480,11 @@ void runCommand(const std::string& cmd_in) {
     {
         d20Game();
     }
+    else if (baseCmd == "coin" || baseCmd == "coinflip" || baseCmd == "flip" )
+    {
+        coinGame();
+    }
+    
     
     else {
         printLine("Unknown command: " + baseCmd);
