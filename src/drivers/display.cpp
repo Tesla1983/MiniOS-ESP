@@ -314,6 +314,9 @@ void print(const char& s) {
     }
 }
 
+
+
+
 void addToBuffer(const std::string& s) {
     if (bufferMutex != NULL) {
         xSemaphoreTake(bufferMutex, portMAX_DELAY);

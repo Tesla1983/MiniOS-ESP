@@ -85,7 +85,8 @@ void serialInputProcess(void *parameter) {
             overFlownLines = 0;
             initY = currentCursorY;
             tft.setCursor(5, currentCursorY);
-            print(">" + getDeviceName() + "@Mini:");
+            std::string prompt = ">" + getDeviceName() + "@Mini:";
+            tft.print(prompt.c_str());
             promptPrinted = true;
         }
         lastScrollOffset = scrollOffset;
