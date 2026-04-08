@@ -57,6 +57,8 @@ void initProcess(void *parameter) {
 }
 int16_t initY = currentCursorY;
 int16_t overFlownLines  = 0;
+int lastScrollOffset = 0;
+
 void serialInputProcess(void *parameter) {
     const TickType_t delay = 10 / portTICK_PERIOD_MS;
     bool promptPrinted = false;
@@ -76,6 +78,18 @@ void serialInputProcess(void *parameter) {
         tft.setCursor(5, currentCursorY);
         print(">" + getDeviceName() + "@Mini:");
         }
+        
+        if (lastScrollOffset > 0 && scrollOffset == 0) {
+            input = "";
+            inputPositions.clear();
+            overFlownLines = 0;
+            initY = currentCursorY;
+            tft.setCursor(5, currentCursorY);
+            print(">" + getDeviceName() + "@Mini:");
+            promptPrinted = true;
+        }
+        lastScrollOffset = scrollOffset;
+        
         if (!screenLocked && !inputLocked && Serial.available()) {
 
             if (Serial.peek() == '\x1b') {
@@ -111,9 +125,8 @@ void serialInputProcess(void *parameter) {
                 }
                 if (input.length() > 0) {
                     
-                    lineBuffer[bufferHead] = ">" + getDeviceName() + "@Mini:" + input;
-                    bufferHead = (bufferHead + 1) % SCROLL_BUFFER_SIZE;
-                    printLine("");
+                    addToBuffer(">" + getDeviceName() + "@Mini:" + input);
+                    printLineNoBuffer("");
                     runCommand(input);
                     currentCursorY = tft.getCursorY();
                     tft.setCursor(5, currentCursorY);

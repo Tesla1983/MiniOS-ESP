@@ -3,13 +3,15 @@
 #include "config.h"
 #include <Adafruit_GFX.h>
 #include <string>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ST7789 tft = Adafruit_ST7789(&SPI, TFT_CS, TFT_DC, TFT_RST);
 int16_t currentCursorY = 0;
 int16_t currentCursorX = 5;
 bool screenCleared = false;
 
-
+SemaphoreHandle_t bufferMutex = NULL;
 
 int bufferHead = 0;
 int bufferCount = 0;
@@ -17,6 +19,10 @@ int scrollOffset = 0;
 std::string lineBuffer[SCROLL_BUFFER_SIZE];
 
 void renderScreen(){
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     Theme current = getCurrentTheme();
     tft.fillScreen(current.bg);
     tft.setTextColor(current.fg, current.bg);
@@ -43,9 +49,18 @@ void renderScreen(){
         tft.setTextColor(current.fg, current.bg);
         
     }
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
 }
 
 void scrollUp(int lines){
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    int oldOffset = scrollOffset;
     int maxScroll = bufferCount - LINES_ON_SCREEN;
 
     if (maxScroll < 0) maxScroll = 0;
@@ -54,21 +69,52 @@ void scrollUp(int lines){
 
     if (scrollOffset > maxScroll) scrollOffset = maxScroll;
     
-    renderScreen();
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
+    if (scrollOffset != oldOffset) {
+        renderScreen();
+    }
 }
 
 void scrollDown(int lines){
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    int oldOffset = scrollOffset;
     scrollOffset -= lines;
     if (scrollOffset < 0) scrollOffset = 0;
-    renderScreen();
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
+    if (scrollOffset != oldOffset) {
+        renderScreen();
+    }
 }
 
 void scrollToBottom(){
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     scrollOffset = 0;
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
     renderScreen();
 }
 
 void scrollToTop(){
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     int maxScroll = bufferCount - LINES_ON_SCREEN;
 
     if (maxScroll < 0){
@@ -76,6 +122,11 @@ void scrollToTop(){
     } 
 
     scrollOffset = maxScroll;
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
     renderScreen();
 }
 
@@ -84,17 +135,25 @@ uint8_t sin8(int angle) {
 }
 
 void initDisplay() {
+    delay(150);
+    SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
+    SPI.setFrequency(40000000); 
     tft.init(240, 320);
     tft.setRotation(1);
     tft.setTextWrap(true);
     tft.invertDisplay(false);
-    for(int i=0; i<SCROLL_BUFFER_SIZE; ++i){
-    lineBuffer[i] = "\n";
+    for(int i = 0; i < SCROLL_BUFFER_SIZE; ++i){
+        lineBuffer[i] = "\n";
     }
+    
+    if (bufferMutex == NULL) {
+        bufferMutex = xSemaphoreCreateMutex();
+    }
+    
     applyTheme();
     currentCursorY = 0;
-
 }
+
 
 void applyTheme() {
     Theme current = getCurrentTheme();
@@ -105,6 +164,10 @@ void applyTheme() {
 }
 
 void clearScreen() {
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     Theme current = getCurrentTheme();
     tft.fillScreen(current.bg);
     tft.setCursor(5, 0);
@@ -113,6 +176,10 @@ void clearScreen() {
     tft.setTextColor(current.fg, current.bg);
     screenCleared = true;
     // print(">" + getDeviceName() + "@Mini:");
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
 }
 
 void newPage() {
@@ -126,9 +193,62 @@ void newPage() {
 void printLine(const std::string& s) {
     Serial.println(s.c_str());
 
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     lineBuffer[bufferHead] = s;
     bufferHead = (bufferHead + 1) % SCROLL_BUFFER_SIZE;
     if (bufferCount < SCROLL_BUFFER_SIZE) bufferCount++;
+    
+    bool wasScrolled = (scrollOffset > 0);
+
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
+    if (wasScrolled) {
+        scrollToBottom();
+        return;
+    }
+    
+    if (scrollOffset == 0) {
+        Theme current = getCurrentTheme();
+
+        if (currentCursorY + LINE_HEIGHT > MAX_Y) {
+            newPage();
+            // renderScreen();
+
+            vTaskDelay(1 / portTICK_PERIOD_MS);
+            return;
+        }
+
+        tft.setCursor(5, currentCursorY);
+        tft.setTextColor(current.fg, current.bg);
+        tft.println(s.c_str());
+        currentCursorY = tft.getCursorY();
+        currentCursorX = tft.getCursorX();
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
+}
+
+void printLineNoBuffer(const std::string& s) {
+    Serial.println(s.c_str());
+
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    bool wasScrolled = (scrollOffset > 0);
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
+    if (wasScrolled) {
+        scrollToBottom();
+    }
 
     if (scrollOffset == 0) {
         Theme current = getCurrentTheme();
@@ -151,9 +271,14 @@ void printLine(const std::string& s) {
     }
 }
 
+
 void print(const std::string& s) {
     Serial.print(s.c_str());
 
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     Theme current = getCurrentTheme();
     if (currentCursorY > MAX_Y) {
         newPage();
@@ -162,11 +287,19 @@ void print(const std::string& s) {
     tft.print(s.c_str());
     currentCursorY = tft.getCursorY();
     currentCursorX = tft.getCursorX();
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
 }
 
 void print(const char& s) {
     Serial.print(s);
 
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
     Theme current = getCurrentTheme();
     if (currentCursorY > MAX_Y) {
         newPage();
@@ -175,6 +308,24 @@ void print(const char& s) {
     tft.print(s);
     currentCursorY = tft.getCursorY();
     currentCursorX = tft.getCursorX();
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+}
+
+void addToBuffer(const std::string& s) {
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    lineBuffer[bufferHead] = s;
+    bufferHead = (bufferHead + 1) % SCROLL_BUFFER_SIZE;
+    if (bufferCount < SCROLL_BUFFER_SIZE) bufferCount++;
+    
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
 }
 
 void screensaver(int mode) {

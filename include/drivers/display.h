@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <Adafruit_ST7789.h>
 #include <string>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 extern Adafruit_ST7789 tft;
 extern bool screenLocked;
@@ -19,8 +21,10 @@ void clearScreen();
 void newPage();
 void renderScreen();
 void printLine(const std::string& s);
+void printLineNoBuffer(const std::string& s);
 void print(const std::string& s);
 void print(const char& s);
+void addToBuffer(const std::string& s);
 
 void scrollUp(int lines = 3);
 void scrollDown(int lines = 3);
@@ -39,6 +43,7 @@ extern std::string lineBuffer[SCROLL_BUFFER_SIZE];
 extern int bufferHead;
 extern int bufferCount;
 extern int scrollOffset;
+extern SemaphoreHandle_t bufferMutex;
 
 
 
