@@ -13,7 +13,7 @@ struct Theme {
 extern Theme themes[];
 extern int currentTheme;
 extern int themeCount;
-
+extern Theme current;
 void listThemes();
 void setTheme(const std::string& themeName);
 Theme getCurrentTheme();

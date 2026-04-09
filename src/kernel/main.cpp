@@ -77,6 +77,11 @@ void serialInputProcess(void *parameter) {
         initY = currentCursorY;
         tft.setCursor(5, currentCursorY);
         print(">" + getDeviceName() + "@Mini:");
+        tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+        tft.print(" ");
+        tft.setCursor(currentCursorX, currentCursorY);
+        tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+
         }
         
         if (lastScrollOffset > 0 && scrollOffset == 0) {
@@ -88,6 +93,11 @@ void serialInputProcess(void *parameter) {
             std::string prompt = ">" + getDeviceName() + "@Mini:";
             tft.print(prompt.c_str());
             promptPrinted = true;
+            tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+            tft.print(" ");
+            tft.setCursor(currentCursorX, currentCursorY);
+            tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+
         }
         lastScrollOffset = scrollOffset;
         
@@ -112,6 +122,11 @@ void serialInputProcess(void *parameter) {
             char c = Serial.read();
 
             if (c == '\n') {
+
+                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+                tft.print(" ");
+                tft.setCursor(currentCursorX, currentCursorY);
+
                 if (screenCleared) {
                     // if (input.length() > 0) {
                     //     print(input);
@@ -123,6 +138,7 @@ void serialInputProcess(void *parameter) {
                     print(">" + getDeviceName() + "@Mini:");
                     promptPrinted = true; 
 
+
                 }
                 if (input.length() > 0) {
                     
@@ -133,6 +149,10 @@ void serialInputProcess(void *parameter) {
                     tft.setCursor(5, currentCursorY);
                     print(">" + getDeviceName() + "@Mini:");
                     promptPrinted = true;
+                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                    tft.print(" ");
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
 
                 }
 
@@ -150,11 +170,19 @@ void serialInputProcess(void *parameter) {
 
                     CursorPosition previousChar = inputPositions.back();
                     inputPositions.pop_back();
+
+
                     currentCursorX = previousChar.x;
                     currentCursorY = previousChar.y;
 
+
+
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.print("  ");
+                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
                     tft.setCursor(currentCursorX, currentCursorY);
                     tft.print(" ");
+                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
                     tft.setCursor(currentCursorX, currentCursorY);
                 }
 
@@ -165,6 +193,15 @@ void serialInputProcess(void *parameter) {
                 if (initY != currentCursorY){
                     overFlownLines++;
                 }
+
+                currentCursorX = tft.getCursorX();
+                currentCursorY = tft.getCursorY();
+
+                tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                tft.print(" ");
+                tft.setCursor(currentCursorX, currentCursorY);
+                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+                
             }
         }
 
