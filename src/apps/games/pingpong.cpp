@@ -7,7 +7,7 @@
 static void fillBorders(){
     tft.fillRect(5,0,310,5,ST77XX_BLUE);
     tft.fillRect(5,225,310,5,ST77XX_BLUE);
-    tft.fillRect(315,0,5,229,ST77XX_RED);
+    tft.fillRect(315,0,5,230,ST77XX_RED);
 }
 
 static int optimisedBorderRedraw = 0;
