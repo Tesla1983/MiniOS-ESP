@@ -43,9 +43,12 @@ void renderScreen(){
 
     if (scrollOffset > 0){
         tft.setTextColor(current.bg , current.bg ^ 0xFFFF);
-        tft.setCursor(270, 0);
-        std::string ind = "^" + std::to_string(scrollOffset);
-        tft.print(ind.c_str());
+        tft.setCursor(260, 0);
+        char ind[16];
+        snprintf(ind, sizeof(ind), "^%d", scrollOffset);
+        tft.print(ind);
+        vTaskDelay(2 / portTICK_PERIOD_MS);
+        tft.endWrite();
         tft.setTextColor(current.fg, current.bg);
         
     }

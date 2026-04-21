@@ -88,10 +88,15 @@ void serialInputProcess(void *parameter) {
             input = "";
             inputPositions.clear();
             overFlownLines = 0;
-            initY = currentCursorY;
+            // initY = currentCursorY;
             tft.setCursor(5, currentCursorY);
             std::string prompt = ">" + getDeviceName() + "@Mini:";
             tft.print(prompt.c_str());
+
+            currentCursorX = tft.getCursorX();
+            currentCursorY = tft.getCursorY();
+            initY = currentCursorY;
+
             promptPrinted = true;
             tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
             tft.print(" ");
@@ -101,7 +106,7 @@ void serialInputProcess(void *parameter) {
         }
         lastScrollOffset = scrollOffset;
         
-        if (!screenLocked && !inputLocked && Serial.available()) {
+        if (!screenLocked && !inputLocked && Serial.available() ) {
 
             if (Serial.peek() == '\x1b') {
                 Serial.read();
@@ -118,91 +123,98 @@ void serialInputProcess(void *parameter) {
                 }
                 continue;
             }
+            if(scrollOffset == 0){
+                char c = Serial.read();
 
-            char c = Serial.read();
+                if (c == '\n') {
 
-            if (c == '\n') {
+                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+                    tft.print(" ");
+                    tft.setCursor(currentCursorX, currentCursorY);
 
-                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
-                tft.print(" ");
-                tft.setCursor(currentCursorX, currentCursorY);
+                    if (screenCleared) {
+                        // if (input.length() > 0) {
+                        //     print(input);
+                        // }
+                        // printLine("");
+                        currentCursorY = tft.getCursorY();
+                        screenCleared = false;
+                        tft.setCursor(5, currentCursorY);
+                        print(">" + getDeviceName() + "@Mini:");
+                        promptPrinted = true; 
 
-                if (screenCleared) {
-                    // if (input.length() > 0) {
-                    //     print(input);
-                    // }
-                    // printLine("");
+
+                    }
+                    if (input.length() > 0) {
+                        
+                        addToBuffer(">" + getDeviceName() + "@Mini:" + input);
+                        printLineNoBuffer("");
+                        runCommand(input);
+                        currentCursorY = tft.getCursorY();
+                        tft.setCursor(5, currentCursorY);
+                        print(">" + getDeviceName() + "@Mini:");
+                        promptPrinted = true;
+                        tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                        tft.print(" ");
+                        tft.setCursor(currentCursorX, currentCursorY);
+                        tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+
+                    }
+
+                    input = "";
+                    overFlownLines = 0;
+                    initY = currentCursorY;
+                    promptPrinted = false; 
+                } else if (c == '\b' || c == 127) {
+                    if (input.length() > 0) {
+
+                        input.pop_back();
+                        Serial.write('\b');
+                        Serial.write(' ');
+                        Serial.write('\b');
+
+                        CursorPosition previousChar = inputPositions.back();
+                        inputPositions.pop_back();
+
+
+                        currentCursorX = previousChar.x;
+                        currentCursorY = previousChar.y;
+
+
+
+                        tft.setCursor(currentCursorX, currentCursorY);
+                        tft.print("  ");
+                        tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                        tft.setCursor(currentCursorX, currentCursorY);
+                        tft.print(" ");
+                        tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+                        tft.setCursor(currentCursorX, currentCursorY);
+                    }
+
+                } else {
+                    input += c;
+                    inputPositions.push_back({currentCursorX, currentCursorY});
+                    print(c);
+                    if (initY != currentCursorY){
+                        overFlownLines++;
+                    }
+
+                    currentCursorX = tft.getCursorX();
                     currentCursorY = tft.getCursorY();
-                    screenCleared = false;
-                    tft.setCursor(5, currentCursorY);
-                    print(">" + getDeviceName() + "@Mini:");
-                    promptPrinted = true; 
 
-
-                }
-                if (input.length() > 0) {
+                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                    tft.print(" ");
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
                     
-                    addToBuffer(">" + getDeviceName() + "@Mini:" + input);
-                    printLineNoBuffer("");
-                    runCommand(input);
-                    currentCursorY = tft.getCursorY();
-                    tft.setCursor(5, currentCursorY);
-                    print(">" + getDeviceName() + "@Mini:");
-                    promptPrinted = true;
-                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
-                    tft.print(" ");
-                    tft.setCursor(currentCursorX, currentCursorY);
-                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
-
                 }
-
-                input = "";
-                overFlownLines = 0;
-                initY = currentCursorY;
-                promptPrinted = false; 
-            } else if (c == '\b' || c == 127) {
-                if (input.length() > 0) {
-
-                    input.pop_back();
-                    Serial.write('\b');
-                    Serial.write(' ');
-                    Serial.write('\b');
-
-                    CursorPosition previousChar = inputPositions.back();
-                    inputPositions.pop_back();
-
-
-                    currentCursorX = previousChar.x;
-                    currentCursorY = previousChar.y;
-
-
-
-                    tft.setCursor(currentCursorX, currentCursorY);
-                    tft.print("  ");
-                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
-                    tft.setCursor(currentCursorX, currentCursorY);
-                    tft.print(" ");
-                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
-                    tft.setCursor(currentCursorX, currentCursorY);
-                }
-
-            } else {
-                input += c;
-                inputPositions.push_back({currentCursorX, currentCursorY});
-                print(c);
-                if (initY != currentCursorY){
-                    overFlownLines++;
-                }
-
-                currentCursorX = tft.getCursorX();
-                currentCursorY = tft.getCursorY();
-
-                tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
-                tft.print(" ");
-                tft.setCursor(currentCursorX, currentCursorY);
-                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
-                
             }
+                else {
+                    while(Serial.available()) {
+                    Serial.read(); 
+                    }
+                }
+            
         }
 
         vTaskDelay(delay);

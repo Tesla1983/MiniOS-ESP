@@ -37,7 +37,7 @@ static void pingpongTask(void* pvParameters) {
     int speedY = 1;
     int ballRadius = 5;
     uint16_t colour = 65535;
-
+    uint16_t ballColour = 65535;
     int16_t racketX = 0;
     int16_t racketY = Y_MAX / 2;
     tft.drawRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
@@ -72,14 +72,18 @@ static void pingpongTask(void* pvParameters) {
                 tft.println("Press 'R' to restart.");
 
                 score = 0;
+                ballColour = 65535;
                 racketY = Y_MAX / 2;
                 tft.drawRect(racketX, racketY, RACKET_WIDTH, RACKET_LENGTH, colour);
                 fillBorders();
 
                 tft.setCursor(180, 230);
                 tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
+                tft.setTextColor(ST77XX_WHITE);
                 tft.print("Score:");
                 tft.print(score);
+                tft.setCursor(5, 230);
+                tft.print("Press ENTER to exit...");
 
                 state = PING_PONG_GAME_STATE_PLAYING;
             }
@@ -118,6 +122,10 @@ static void pingpongTask(void* pvParameters) {
                 speedY += (std::rand() % 3 - 1);
                 speedY = std::max(-2, std::min(speedY, 2));
                 score++;
+                if ( score == 5) ballColour = ST77XX_YELLOW;
+                if ( score == 10) ballColour = ST77XX_ORANGE;
+                if ( score == 15) ballColour = ST77XX_GREEN;
+                if ( score == 20) ballColour = ST77XX_CYAN;
                 tft.setCursor(180, 230);
                 tft.fillRect(180, 230, 140, 10, ST77XX_BLACK);
                 tft.print("Score:");
@@ -165,7 +173,7 @@ static void pingpongTask(void* pvParameters) {
             optimisedBorderRedraw = (optimisedBorderRedraw + 1) % 5;
             if (optimisedBorderRedraw == 0) fillBorders();
 
-            tft.fillCircle(x, y, ballRadius, colour);
+            tft.fillCircle(x, y, ballRadius, ballColour);
 
         } else if (state == PING_PONG_GAME_STATE_LOST) {
             state = PING_PONG_GAME_STATE_WAITING_RESTART;
