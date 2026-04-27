@@ -64,7 +64,7 @@ void serialInputProcess(void *parameter) {
     bool promptPrinted = false;
     vTaskDelay(500 / portTICK_PERIOD_MS);
     tft.setCursor(5, tft.getCursorY());
-    print(">" + getDeviceName() + "@Mini:");
+    printPrompt(true);
     promptPrinted = true;
 
     for (;;) {
@@ -76,7 +76,7 @@ void serialInputProcess(void *parameter) {
         overFlownLines = 0;
         initY = currentCursorY;
         tft.setCursor(5, currentCursorY);
-        print(">" + getDeviceName() + "@Mini:");
+        printPrompt(true);
         tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
         tft.print(" ");
         tft.setCursor(currentCursorX, currentCursorY);
@@ -90,8 +90,7 @@ void serialInputProcess(void *parameter) {
             overFlownLines = 0;
             // initY = currentCursorY;
             tft.setCursor(5, currentCursorY);
-            std::string prompt = ">" + getDeviceName() + "@Mini:";
-            tft.print(prompt.c_str());
+            printPrompt(false);
 
             currentCursorX = tft.getCursorX();
             currentCursorY = tft.getCursorY();
@@ -140,7 +139,7 @@ void serialInputProcess(void *parameter) {
                         currentCursorY = tft.getCursorY();
                         screenCleared = false;
                         tft.setCursor(5, currentCursorY);
-                        print(">" + getDeviceName() + "@Mini:");
+                        printPrompt(true);
                         promptPrinted = true; 
 
 
@@ -152,7 +151,7 @@ void serialInputProcess(void *parameter) {
                         runCommand(input);
                         currentCursorY = tft.getCursorY();
                         tft.setCursor(5, currentCursorY);
-                        print(">" + getDeviceName() + "@Mini:");
+                        printPrompt(true);
                         promptPrinted = true;
                         tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
                         tft.print(" ");

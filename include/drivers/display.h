@@ -24,6 +24,7 @@ void printLine(const std::string& s);
 void printLineNoBuffer(const std::string& s);
 void print(const std::string& s);
 void print(const char& s);
+void printPrompt(bool serial);
 void addToBuffer(const std::string& s);
 
 void scrollUp(int lines = 3);

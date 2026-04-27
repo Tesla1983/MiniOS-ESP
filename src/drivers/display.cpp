@@ -317,6 +317,46 @@ void print(const char& s) {
     }
 }
 
+void printPrompt(bool serial){
+    char triangle[2] = ">";
+    char host[5] = "Mini";
+    char colon[2] = ":";
+    
+    if (serial)
+    { 
+    Serial.print(triangle);
+    Serial.print( getDeviceName().c_str());
+    Serial.print("@");
+    Serial.print(host);
+    Serial.print(colon);
+    }
+
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    Theme current = getCurrentTheme();
+    if (currentCursorY > MAX_Y) {
+        newPage();
+    }
+    tft.setTextColor(current.prompt.aux,current.bg);
+    tft.print(triangle);
+    tft.setTextColor(current.prompt.name,current.bg);
+    tft.print(getDeviceName().c_str());
+    tft.setTextColor(current.prompt.at,current.bg);
+    tft.print("@");
+    tft.setTextColor(current.prompt.host,current.bg);
+    tft.print(host);
+    tft.setTextColor(current.prompt.aux,current.bg);
+    tft.print(colon);
+    tft.setTextColor(current.fg,current.bg);
+    currentCursorY = tft.getCursorY();
+    currentCursorX = tft.getCursorX();
+
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+}
 
 
 
@@ -428,6 +468,13 @@ void screensaver(int mode) {
                     }
                 } break;
 
+                case 9: {
+                    int dx = x - (width / 2);  
+                    int dy = y - (height / 2);
+                    uint16_t raw = (dx * dx + offset) ^ (dy * dy + offset);
+                    color = (raw & 0xF800) | (raw & 0x07E0) | (raw & 0x001F);
+                } break;
+
                 default:
                     color = ((x + y + offset) % 60 < 30) ? ST77XX_CYAN : ST77XX_BLUE;
                     break;
@@ -448,9 +495,9 @@ void screensaver(int mode) {
 
         tft.endWrite();
 
-        if (mode == 2)              offset += 4;
+        if (mode == 2) offset += 4;
         else if (mode == 5 || mode == 7) offset += 3;
-        else                        offset += 2;
+        else offset += 2;
 
         if (offset > 10000) offset = 0;
 

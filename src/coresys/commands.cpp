@@ -370,8 +370,8 @@ void runCommand(const std::string& cmd_in) {
         }
         
         int mode = std::stoi(args.arg1);
-        if (mode < 1 || mode > 8) {
-            printLine("Invalid mode. Use 1-7.");
+        if (mode < 1 || mode > 10) {
+            printLine("Invalid mode. Use 1-9.");
             return;
         }
         

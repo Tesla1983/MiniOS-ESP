@@ -4,9 +4,17 @@
 #include <Arduino.h>
 #include <string>
 
+struct Prompt {
+    uint16_t name;
+    uint16_t at;
+    uint16_t host;
+    uint16_t aux;
+};
+
 struct Theme {
     uint16_t bg;
     uint16_t fg;
+    Prompt prompt;
     const char* name;
 };
 
