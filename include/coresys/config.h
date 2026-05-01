@@ -8,25 +8,25 @@
     // ESP32 SPI pins pre-configured
     #define TFT_MOSI 23
     #define TFT_SCLK 18
-    #define TFT_CS   5
-    #define TFT_DC   2
-    #define TFT_RST  4
+    #define TFT_CS 5
+    #define TFT_DC 2
+    #define TFT_RST 4
     #define DEVICE_NAME "ESP32"
 
 #elif defined(DEVICE_ESP32_S3)
     // ESP32 S3 SPI pins pre-configured
     #define TFT_MOSI 17
     #define TFT_SCLK 18
-    #define TFT_CS   14
-    #define TFT_DC   15
-    #define TFT_RST  4 
+    #define TFT_CS 14
+    #define TFT_DC 15
+    #define TFT_RST 4 
 
     #define DEVICE_NAME "ESP32-S3"
 #else
     // Default fallback (ESP32 Standard)
-    #define TFT_CS   5
-    #define TFT_DC   2
-    #define TFT_RST  4
+    #define TFT_CS 5
+    #define TFT_DC 2
+    #define TFT_RST 4
     #define DEVICE_NAME "ESP32"
 #endif
 

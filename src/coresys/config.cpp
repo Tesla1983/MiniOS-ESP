@@ -147,4 +147,3 @@ std::string getWifiSSID() {
 std::string getWifiPass() {
     return getConfigKey("PASS");
 }
-

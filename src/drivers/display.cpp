@@ -103,7 +103,12 @@ void scrollToBottom(){
     if (bufferMutex != NULL) {
         xSemaphoreTake(bufferMutex, portMAX_DELAY);
     }
-    
+    if (0 == scrollOffset) {
+        if (bufferMutex != NULL) {
+            xSemaphoreGive(bufferMutex);
+        }
+        return;
+    }
     scrollOffset = 0;
     
     if (bufferMutex != NULL) {
@@ -122,7 +127,14 @@ void scrollToTop(){
 
     if (maxScroll < 0){
       maxScroll = 0;  
-    } 
+    }
+
+    if (maxScroll == scrollOffset) {
+        if (bufferMutex != NULL) {
+            xSemaphoreGive(bufferMutex);
+        }
+        return;
+    }
 
     scrollOffset = maxScroll;
     
@@ -533,3 +545,4 @@ void showLogo() {
     printLine(OS_VERSION);
     printLine("Check: https://github.com/VuqarAhadli");
 }
+

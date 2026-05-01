@@ -19,7 +19,7 @@ std::string input = "";
     the unlock on its next tick and redraw the prompt in terminal.
 */
 bool screenJustUnlocked = false;
-
+bool pressedEnd = false;
 bool screenLocked = false;
 bool inputLocked = false;
 
@@ -46,7 +46,8 @@ void initProcess(void *parameter) {
     printLine("[SYSTEM] Filesystem initialized");
     logKernelMessage("[SYSTEM] Filesystem initialized");
     loadConfig(); 
-    setTheme(std::to_string(getSavedTheme()));  
+    setTheme(std::to_string(getSavedTheme()));
+
     printLine("[SYSTEM] MiniOS Ready");
     logKernelMessage("[SYSTEM] MiniOS Ready");
     printLine("Type 'help' for commands");
@@ -84,10 +85,21 @@ void serialInputProcess(void *parameter) {
 
         }
         
-        if (lastScrollOffset > 0 && scrollOffset == 0) {
+        bool shouldRecover = false;
+        if (bufferMutex != NULL) {
+            xSemaphoreTake(bufferMutex, portMAX_DELAY);
+            shouldRecover = (lastScrollOffset > 0 && scrollOffset == 0);
+            xSemaphoreGive(bufferMutex);
+        } else {
+            shouldRecover = (lastScrollOffset > 0 && scrollOffset == 0);
+        }
+        
+        if (shouldRecover) {
             input = "";
             inputPositions.clear();
             overFlownLines = 0;
+
+            pressedEnd = false;
             // initY = currentCursorY;
             tft.setCursor(5, currentCursorY);
             printPrompt(false);
@@ -103,7 +115,6 @@ void serialInputProcess(void *parameter) {
             tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
 
         }
-        lastScrollOffset = scrollOffset;
         
         if (!screenLocked && !inputLocked && Serial.available() ) {
 
@@ -115,14 +126,28 @@ void serialInputProcess(void *parameter) {
                     char c = Serial.read();
                     if (b == '[') {
                         if (c == 'A') { scrollUp(4); continue; }
-                        if (c == 'B') { scrollDown(4); continue; }
-                        if (c == 'F') { scrollToBottom(); continue; }
-                        if (c == 'H') { scrollToTop(); continue; }
+                        else if (c == 'B') { scrollDown(4); continue; }
+                        else if (c == 'F') {
+                            scrollToBottom();
+                            continue;
+                        }
+                        else if (c == 'H') {
+                            scrollToTop();
+                            continue;
+                        }
                     }
                 }
                 continue;
             }
-            if(scrollOffset == 0){
+            
+            int currentScroll = 0;
+            if (bufferMutex != NULL) {
+                xSemaphoreTake(bufferMutex, portMAX_DELAY);
+                currentScroll = scrollOffset;
+                xSemaphoreGive(bufferMutex);
+            }
+            
+            if(currentScroll == 0){
                 char c = Serial.read();
 
                 if (c == '\n') {
@@ -208,12 +233,16 @@ void serialInputProcess(void *parameter) {
                     
                 }
             }
-                else {
-                    while(Serial.available()) {
-                    Serial.read(); 
-                    }
-                }
             
+        }
+
+        // Update last scroll position for recovery logic
+        if (bufferMutex != NULL) {
+            xSemaphoreTake(bufferMutex, portMAX_DELAY);
+            lastScrollOffset = scrollOffset;
+            xSemaphoreGive(bufferMutex);
+        } else {
+            lastScrollOffset = scrollOffset;
         }
 
         vTaskDelay(delay);
