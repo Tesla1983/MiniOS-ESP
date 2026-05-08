@@ -22,6 +22,7 @@ void newPage();
 void renderScreen();
 void printLine(const std::string& s);
 void printLineNoBuffer(const std::string& s);
+void printLineNoSerialLineBreak(const std::string& s);
 void print(const std::string& s);
 void print(const char& s);
 void printPrompt(bool serial);

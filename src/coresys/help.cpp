@@ -27,15 +27,16 @@ void showHelpFile() {
 
 void showHelpSystem() {
     printLine("System Commands:");
-    printLine("  mem       - Memory info (alias: free)");
-    printLine("  dmesg     - System logs");
-    printLine("  uptime    - System uptime");
-    printLine("  reboot    - Restart device (alias: restart)");
-    printLine("  fetch     - System info (alias: neofetch)");
-    printLine("  os        - OS logo (alias: logo)");
-    printLine("  version   - OS version (alias: ver)");
-    printLine("  clear     - Clear display (alias: cls)");
-    printLine("  history   - Command history (alias: hist)");
+    printLine("  mem      - Memory info (alias: free)");
+    printLine("  dmesg    - System logs");
+    printLine("  uptime   - System uptime");
+    printLine("  reboot   - Restart device (alias: restart)");
+    printLine("  fetch    - System info (alias: neofetch)");
+    printLine("  name     - Change username(alias: username)");
+    printLine("  os       - OS logo (alias: logo)");
+    printLine("  version  - OS version (alias: ver)");
+    printLine("  clear    - Clear display (alias: cls)");
+    printLine("  history  - Command history (alias: hist)");
 }
 
 void showHelpNetwork() {

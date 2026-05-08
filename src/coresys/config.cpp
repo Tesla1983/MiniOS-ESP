@@ -9,7 +9,7 @@
 const char* NTP_SERVER = "pool.ntp.org";
 const long GMT_OFFSET = 4 * 3600;   
 const int DAYLIGHT_OFFSET = 0;
-const char* OS_VERSION = "MiniOS-ESP v2.1.2";
+const char* OS_VERSION = "MiniOS-ESP v2.1.3";
 
 static std::string deviceName = "Mini";
 static int savedTheme = 0;
@@ -106,17 +106,67 @@ std::string getDeviceName() {
     return deviceName;
 }
 
-void setDeviceName(const std::string& name) {
-    if (name.empty()) {
+
+
+void setDeviceName() {
+    std::string name = "";
+    while (Serial.available() > 0) Serial.read();
+    tft.setCursor(5,currentCursorY);
+    print("Enter new username: ");
+    while (true) {
+        if (Serial.available()) {
+            char c = Serial.read();
+            if (c == '\n' || c == '\r') {
+
+                Serial.println();
+                break;
+            } else if (c == '\b' || c == 127) {
+                if (name.length() > 0) {
+                    name.pop_back();
+                    Serial.write('\b');
+                    Serial.write(' ');
+                    Serial.write('\b');
+                    currentCursorX -= 6;
+                    if (currentCursorX < 5) {
+                        currentCursorY -= LINE_HEIGHT;
+                        if (currentCursorY < 0) currentCursorY = 0;
+                        currentCursorX = 0x13D; 
+                    }
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.print(" ");
+                    tft.setCursor(currentCursorX, currentCursorY);
+
+                }
+            } else if (c >= 32 && c <= 126) {
+                name += c;
+                print(c);
+            }
+        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    
+    size_t start = name.find_first_not_of(' ');
+    size_t end = name.find_last_not_of(' ');
+
+    if (start == std::string::npos) {
         printLine("Error: Username cannot be empty.");
         return;
     }
-    if (name.length() > 32) {
+
+    std::string trimmed = name.substr(start, end - start + 1);
+
+    if (trimmed.length() > 32) {
+        printLine("");
         printLine("Error: Username too long (max 32).");
+        printLine("Your username is " 
+                  + std::to_string(trimmed.length())
+                  + " characters long."
+                 );
         return;
     }
-    deviceName = name;
+    deviceName = trimmed;
     setConfigKey("deviceName", deviceName);
+    printLineNoSerialLineBreak("");
     printLine("Username set: " + deviceName);
     logKernelMessage("[SYSTEM] Username set: " + deviceName);
 

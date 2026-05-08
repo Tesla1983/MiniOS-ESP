@@ -387,11 +387,11 @@ void runCommand(const std::string& cmd_in) {
         funcToGraph(args.arg1, color);
     }
     else if (baseCmd == "username" || baseCmd == "name") {
-        if (args.arg1.length() == 0 || args.arg2.length() != 0) {
-            printLine("Usage: username <name>");
-            return;
-        }
-        setDeviceName(args.arg1);
+        // if (args.arg1.length() == 0 || args.arg2.length() != 0) {
+        //     printLine("Usage: username <name>");
+        //     return;
+        // }
+        setDeviceName();
     }
     else if (baseCmd == "help" || baseCmd == "h") {
         if (args.arg1.length() == 0) {

@@ -45,7 +45,7 @@ void loadConfig();
 void saveConfig();      
 
 std::string getDeviceName();
-void setDeviceName(const std::string& name);
+void setDeviceName();
 
 int  getSavedTheme();          
 void saveSavedTheme(int index);

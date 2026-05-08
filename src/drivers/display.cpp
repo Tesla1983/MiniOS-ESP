@@ -247,6 +247,48 @@ void printLine(const std::string& s) {
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
+void printLineNoSerialLineBreak(const std::string& s) {
+    Serial.print(s.c_str());
+
+    if (bufferMutex != NULL) {
+        xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    }
+    
+    lineBuffer[bufferHead] = s;
+    bufferHead = (bufferHead + 1) % SCROLL_BUFFER_SIZE;
+    if (bufferCount < SCROLL_BUFFER_SIZE) bufferCount++;
+    
+    bool wasScrolled = (scrollOffset > 0);
+
+    if (bufferMutex != NULL) {
+        xSemaphoreGive(bufferMutex);
+    }
+    
+    if (wasScrolled) {
+        scrollToBottom();
+        return;
+    }
+    
+    if (scrollOffset == 0) {
+        Theme current = getCurrentTheme();
+
+        if (currentCursorY + LINE_HEIGHT > MAX_Y) {
+            newPage();
+            // renderScreen();
+
+            vTaskDelay(1 / portTICK_PERIOD_MS);
+            return;
+        }
+
+        tft.setCursor(5, currentCursorY);
+        tft.setTextColor(current.fg, current.bg);
+        tft.println(s.c_str());
+        currentCursorY = tft.getCursorY();
+        currentCursorX = tft.getCursorX();
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
+}
 
 void printLineNoBuffer(const std::string& s) {
     Serial.println(s.c_str());
