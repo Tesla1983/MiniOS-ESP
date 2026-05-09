@@ -47,6 +47,8 @@ extern int bufferCount;
 extern int scrollOffset;
 extern SemaphoreHandle_t bufferMutex;
 
-
-
+struct CursorPosition {
+    int16_t x;
+    int16_t y;
+};
 #endif

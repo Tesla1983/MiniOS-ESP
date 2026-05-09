@@ -1,6 +1,7 @@
 #include "config.h"
 #include "display.h"
 #include "kernel.h"
+#include "theme.h"
 #include <Arduino.h>
 #include <SPIFFS.h>
 #include <string>
@@ -110,36 +111,67 @@ std::string getDeviceName() {
 
 void setDeviceName() {
     std::string name = "";
+    std::vector<CursorPosition> nameInputPositions;
+
     while (Serial.available() > 0) Serial.read();
+
     tft.setCursor(5,currentCursorY);
     print("Enter new username: ");
+
+    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+    tft.print(" ");
+    tft.setCursor(currentCursorX, currentCursorY);
+    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+
     while (true) {
         if (Serial.available()) {
             char c = Serial.read();
             if (c == '\n' || c == '\r') {
 
+                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
+                tft.print(" ");
+                tft.setCursor(currentCursorX, currentCursorY);
+                Serial.println();
+
                 Serial.println();
                 break;
             } else if (c == '\b' || c == 127) {
                 if (name.length() > 0) {
+
                     name.pop_back();
                     Serial.write('\b');
                     Serial.write(' ');
                     Serial.write('\b');
-                    currentCursorX -= 6;
-                    if (currentCursorX < 5) {
-                        currentCursorY -= LINE_HEIGHT;
-                        if (currentCursorY < 0) currentCursorY = 0;
-                        currentCursorX = 0x13D; 
-                    }
+
+                    CursorPosition previousChar = nameInputPositions.back();
+                    nameInputPositions.pop_back();
+
+                    currentCursorX = previousChar.x;
+                    currentCursorY = previousChar.y;
+
+                    tft.setCursor(currentCursorX, currentCursorY);
+                    tft.print("  "); 
+
+                    tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
                     tft.setCursor(currentCursorX, currentCursorY);
                     tft.print(" ");
+                    tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
                     tft.setCursor(currentCursorX, currentCursorY);
+
 
                 }
             } else if (c >= 32 && c <= 126) {
+                nameInputPositions.push_back({currentCursorX, currentCursorY});
                 name += c;
                 print(c);
+
+                currentCursorX = tft.getCursorX();
+                currentCursorY = tft.getCursorY();
+                
+                tft.setTextColor(getCurrentTheme().bg, getCurrentTheme().fg);
+                tft.print(" ");
+                tft.setCursor(currentCursorX, currentCursorY);
+                tft.setTextColor(getCurrentTheme().fg, getCurrentTheme().bg);
             }
         }
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -149,6 +181,7 @@ void setDeviceName() {
     size_t end = name.find_last_not_of(' ');
 
     if (start == std::string::npos) {
+        printLine("");
         printLine("Error: Username cannot be empty.");
         return;
     }

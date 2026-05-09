@@ -23,10 +23,7 @@ bool pressedEnd = false;
 bool screenLocked = false;
 bool inputLocked = false;
 
-struct CursorPosition {
-    int16_t x;
-    int16_t y;
-};
+
 
 std::vector<CursorPosition> inputPositions;
 
