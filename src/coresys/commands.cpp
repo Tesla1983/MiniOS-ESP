@@ -484,6 +484,10 @@ void runCommand(const std::string& cmd_in) {
     {
         coinGame();
     }
+    else if (baseCmd == "settings" || baseCmd == "config")
+    {
+        showSettings();
+    }
     
     
     else {

@@ -77,6 +77,7 @@ void showHelpOS() {
     printLine("  ps / processes - List processes");
     printLine("  sysstat / stat - System stats");
     printLine("  kill <pid>     - Kill process");
+    printLine("  settings       - Settings menu");
 }
 
 void showHelpDisplay() {

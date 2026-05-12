@@ -23,6 +23,7 @@
 #include "tools/ping.h"
 #include "tools/utils.h"
 #include "tools/sysinfo.h"
+#include "tools/settings.h"
 #include <esp_system.h>
 #include <WiFi.h>
 #include <math.h>
@@ -44,5 +45,6 @@ void showSystemStats();
 void killProcessCmd(int pid);
 
 extern bool promptPrinted;
+extern Theme current;
 
 #endif
