@@ -1,5 +1,6 @@
 use crate::display::Display;
 use crate::filesystem::{FileSystem, MemoryFileSystem};
+use crate::games;
 use crate::kernel::Kernel;
 use crate::theme::{Theme, ThemeName};
 
@@ -109,6 +110,10 @@ impl<F: FileSystem> MiniOs<F> {
             "ps" | "processes" | "top" => self.show_processes(),
             "sysstat" | "stat" => self.show_system_stats(),
             "kill" => self.kill_command(&args),
+            "ball" => self.ball_command(&args),
+            "pong" | "pingpong" => self.print_game_lines(games::pingpong_game()),
+            "d20" | "dice" => self.print_game_lines(games::d20_game()),
+            "coin" | "coinflip" | "flip" => self.print_game_lines(games::coin_game()),
             "echo" => self
                 .display
                 .print_line(command.strip_prefix(&args.cmd).unwrap_or_default().trim()),
@@ -250,6 +255,8 @@ impl<F: FileSystem> MiniOs<F> {
 
     fn show_help(&mut self) {
         self.display.print_line("Commands: help, version, clear, history, ls, write, append, read, rm, mv, cp, theme, ps, stat, kill, echo, exit");
+        self.display
+            .print_line("Games: ball [radius] [count] [trail], pong, d20, coin");
         self.display.print_line(
             "Network commands are compiled as hardware-backend stubs in this host build.",
         );
@@ -312,6 +319,48 @@ impl<F: FileSystem> MiniOs<F> {
             .print_line("Memory: managed by Rust allocator in host build");
     }
 
+    fn print_game_lines(&mut self, lines: Vec<String>) {
+        for line in lines {
+            self.display.print_line(line);
+        }
+    }
+
+    fn ball_command(&mut self, args: &CommandArgs) {
+        let radius = if args.arg1.is_empty() {
+            10
+        } else {
+            match args.arg1.parse::<u16>() {
+                Ok(radius) if radius > 0 && radius < 116 => radius,
+                Ok(_) => {
+                    self.display
+                        .print_line("Error: ball radius must be between 1 and 115 pixels.");
+                    return;
+                }
+                Err(_) => {
+                    self.display
+                        .print_line("Error: invalid radius, must be a number.");
+                    return;
+                }
+            }
+        };
+
+        let count = if args.arg2.is_empty() {
+            1
+        } else {
+            match args.arg2.parse::<usize>() {
+                Ok(count) if count > 0 => count,
+                _ => {
+                    self.display
+                        .print_line("Error: number of balls must be a positive integer.");
+                    return;
+                }
+            }
+        };
+
+        let trail = args.rest.eq_ignore_ascii_case("trail");
+        self.print_game_lines(games::ball_game(radius, count, trail));
+    }
+
     fn kill_command(&mut self, args: &CommandArgs) {
         if args.arg1.is_empty() {
             self.display.print_line("Usage: kill <pid>");
@@ -360,5 +409,55 @@ mod tests {
     fn exit_commands_stop_repl() {
         let mut os = MiniOs::default();
         assert_eq!(os.run_command("exit"), CommandOutcome::Exit);
+    }
+
+    #[test]
+    fn game_commands_are_available_in_host_build() {
+        let mut os = MiniOs::default();
+
+        os.run_command("ball 8 2 trail");
+        assert!(os.display.lines().iter().any(|line| line.contains("弹球")));
+        assert_eq!(
+            os.display
+                .lines()
+                .iter()
+                .filter(|line| line.starts_with("ball #"))
+                .count(),
+            2
+        );
+
+        os.run_command("pong");
+        assert!(os.display.lines().iter().any(|line| line.contains("乒乓")));
+
+        os.run_command("d20");
+        assert!(os
+            .display
+            .lines()
+            .iter()
+            .any(|line| line.contains("二十面骰子")));
+
+        os.run_command("coin");
+        assert!(os
+            .display
+            .lines()
+            .iter()
+            .any(|line| line.contains("抛硬币")));
+    }
+
+    #[test]
+    fn ball_command_validates_arguments() {
+        let mut os = MiniOs::default();
+
+        os.run_command("ball nope");
+        assert_eq!(
+            os.display.lines().last().unwrap(),
+            "Error: invalid radius, must be a number."
+        );
+
+        os.run_command("ball 10 0");
+        assert_eq!(
+            os.display.lines().last().unwrap(),
+            "Error: number of balls must be a positive integer."
+        );
     }
 }
