@@ -7,6 +7,7 @@
 
 pub mod display;
 pub mod filesystem;
+pub mod games;
 pub mod kernel;
 pub mod shell;
 pub mod theme;
