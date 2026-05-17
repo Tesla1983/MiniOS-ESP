@@ -5,8 +5,11 @@
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-supported-brightgreen?logo=platformio)
 ![Arduino](https://img.shields.io/badge/Arduino-supported-success?logo=arduino)
 ![C++](https://img.shields.io/badge/language-C%2B%2B-blue?logo=c%2B%2B)
+![Rust](https://img.shields.io/badge/language-Rust-orange?logo=rust)
 ![FreeRTOS](https://img.shields.io/badge/FreeRTOS-yes-orange?logo=freertos)
 ![Version](https://img.shields.io/github/v/release/VuqarAhadli/MiniOS-ESP)
+
+[中文文档](README.zh-CN.md)
 
 
 ## Table of Contents
@@ -22,7 +25,7 @@
 
 ## Overview
 
-MiniOS-ESP is a lightweight, Unix-like command-line operating system designed for ESP32 microcontrollers with ST7789 display support. It provides a full-featured shell environment with file management, networking capabilities, time synchronization, and process management built on FreeRTOS.
+MiniOS-ESP is a lightweight, Unix-like command-line operating system designed for ESP32 microcontrollers with ST7789 display support. It provides a full-featured shell environment with file management, networking capabilities, time synchronization, and process management built on FreeRTOS. A Rust rewrite of the shell-oriented core is available in `rust/` and can be built as the `minios` host CLI while ESP hardware backends are introduced.
 
 ### Key Features
 
@@ -38,6 +41,20 @@ MiniOS-ESP is a lightweight, Unix-like command-line operating system designed fo
 
 ### Version
 Current Version: **MiniOS-ESP v2.0.4**
+
+### Rust Rewrite
+
+The repository now includes a Rust implementation of the MiniOS command shell and core services:
+
+- `Cargo.toml` defines the `minios-esp-rs` crate and the `minios` executable.
+- `rust/src/shell.rs` ports command parsing, history, file commands, theme selection, process commands, and host-safe network stubs.
+- `rust/src/kernel.rs`, `rust/src/display.rs`, `rust/src/filesystem.rs`, and `rust/src/theme.rs` provide Rust equivalents for the process table, scrollback display buffer, filesystem abstraction, and color themes.
+
+Run the Rust version locally with:
+
+```bash
+cargo run --bin minios
+```
 
 ---
 
