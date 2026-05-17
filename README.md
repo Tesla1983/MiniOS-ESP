@@ -1,6 +1,6 @@
 # MiniOS-ESP 中文文档
 
-[English README](README.md)
+[English README](en.md)
 
 MiniOS-ESP 是一个面向 ESP32 微控制器的轻量级、类 Unix 命令行操作系统，支持 ST7789 TFT 显示屏。项目提供串口交互式 Shell、TFT 文本显示、SPIFFS 文件系统、WiFi 网络工具、时间同步、计算器、主题、屏保和基于 FreeRTOS 的进程管理能力。
 
