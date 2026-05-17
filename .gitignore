@@ -31,3 +31,5 @@ Thumbs.db
 *.elf
 *.hex
 *.log
+
+target/
