@@ -9,7 +9,7 @@
 ![FreeRTOS](https://img.shields.io/badge/FreeRTOS-yes-orange?logo=freertos)
 ![Version](https://img.shields.io/github/v/release/VuqarAhadli/MiniOS-ESP)
 
-[中文文档](README.zh-CN.md)
+# [中文文档](README.zh-CN.md)
 
 
 ## Table of Contents
